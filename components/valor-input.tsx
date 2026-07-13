@@ -8,10 +8,12 @@ import { useState } from "react";
  * Evita disparar uma Server Action a cada tecla.
  */
 export function ValorInput({
+  id,
   value,
   onCommit,
   className = "num-in",
 }: {
+  id?: string;
   value: number | null;
   onCommit: (v: number | null) => void;
   className?: string;
@@ -33,6 +35,7 @@ export function ValorInput({
   return (
     <>
       <input
+        id={id}
         type="number"
         className={className}
         placeholder="0,00"

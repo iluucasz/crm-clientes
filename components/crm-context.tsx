@@ -53,6 +53,19 @@ interface CrmContextValue {
 }
 
 const Ctx = createContext<CrmContextValue | null>(null);
+const LEAD_PARAM = "lead";
+
+function syncLeadParam(id: number | null) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (id == null) url.searchParams.delete(LEAD_PARAM);
+  else url.searchParams.set(LEAD_PARAM, String(id));
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`
+  );
+}
 
 export function useCrm() {
   const v = useContext(Ctx);
@@ -83,6 +96,13 @@ export function CrmProvider({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const id = Number(new URL(window.location.href).searchParams.get(LEAD_PARAM));
+    if (Number.isSafeInteger(id) && id > 0) {
+      window.setTimeout(() => setOpenId(id), 0);
+    }
   }, []);
 
   const replaceLead = useCallback((updated: Lead | null) => {
@@ -119,8 +139,14 @@ export function CrmProvider({
     []
   );
 
-  const openDrawer = useCallback((id: number) => setOpenId(id), []);
-  const closeDrawer = useCallback(() => setOpenId(null), []);
+  const openDrawer = useCallback((id: number) => {
+    setOpenId(id);
+    syncLeadParam(id);
+  }, []);
+  const closeDrawer = useCallback(() => {
+    setOpenId(null);
+    syncLeadParam(null);
+  }, []);
 
   const setStatus = useCallback(
     (id: number, status: string) => {
