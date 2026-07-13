@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCrm } from "./crm-context";
 import { Icon } from "./icon";
+import { ValorInput } from "./valor-input";
 import { PRIORIDADES, STATUSES, stColor } from "@/lib/domain";
 import { brl, fmtStamp } from "@/lib/format";
 
@@ -156,15 +157,10 @@ export function LeadDrawer() {
                   </div>
                   <div className="dfield">
                     <label>Valor do orçamento (R$)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="50"
-                      defaultValue={lead.valor ?? ""}
-                      placeholder="0,00"
-                      onBlur={(e) =>
-                        setField(lead.id, "valor", e.target.value || null)
-                      }
+                    <ValorInput
+                      value={lead.valor}
+                      className="field-input"
+                      onCommit={(v) => setField(lead.id, "valor", v)}
                     />
                   </div>
                   <div className="dfield">

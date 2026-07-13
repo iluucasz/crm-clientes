@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import {
   addHistory,
   createLead as repoCreateLead,
@@ -19,12 +18,15 @@ import type { Lead, NewLeadInput } from "@/lib/types";
  * Server Actions do CRM. Concentram toda a lógica de automação (mudança de
  * status, follow-ups sugeridos, histórico) e persistem no Postgres.
  * Cada ação devolve o lead atualizado para que o cliente reconcilie o estado.
+ *
+ * O cliente aplica atualização otimista e reconcilia com o retorno destas
+ * ações, então NÃO usamos `revalidatePath` aqui — revalidar rebuscaria todos
+ * os leads do banco a cada clique, causando lentidão perceptível. A página é
+ * `force-dynamic` e busca dados frescos em cada carregamento completo.
  */
 
 async function withRefresh<T>(fn: () => Promise<T>): Promise<T> {
-  const result = await fn();
-  revalidatePath("/");
-  return result;
+  return fn();
 }
 
 /** Lista completa — usada em refetch/backup. */

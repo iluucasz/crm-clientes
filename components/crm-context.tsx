@@ -11,8 +11,8 @@ import {
 import type { Lead, NewLeadInput } from "@/lib/types";
 import type { LeadField } from "@/lib/repository/leads";
 import { defaultFilters, type Filters } from "@/lib/selectors";
-import { brl, phoneLink } from "@/lib/format";
-import { stColor } from "@/lib/domain";
+import { addDays, brl, fmtBR, phoneLink, today } from "@/lib/format";
+import { CLOSED, statusConfig, stColor } from "@/lib/domain";
 import * as actions from "@/app/actions/leads";
 import { useToast } from "./toast";
 
@@ -75,6 +75,16 @@ export function CrmProvider({
     );
   }, []);
 
+  /** Aplica uma alteração parcial imediatamente (atualização otimista). */
+  const patchLeadLocal = useCallback(
+    (id: number, partial: Partial<Lead>) => {
+      setLeads((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, ...partial } : l))
+      );
+    },
+    []
+  );
+
   const patchFilters = useCallback(
     (p: Partial<Filters>) => setFilters((f) => ({ ...f, ...p })),
     []
@@ -97,61 +107,75 @@ export function CrmProvider({
     (id: number, status: string) => {
       const lead = leads.find((l) => l.id === id);
       if (!lead || lead.status === status) return;
+
+      // Reproduz a automação localmente para feedback instantâneo.
+      const cfg = statusConfig(status);
+      let followUp = lead.followUp;
+      if (cfg.fuDays != null) followUp = addDays(today(), cfg.fuDays);
+      else if (CLOSED.includes(status)) followUp = null;
+      patchLeadLocal(id, { status, ultimoContato: today(), followUp });
+
+      let extra = "";
+      if (status === "Fechado" && lead.valor)
+        extra = ` — ${brl(lead.valor)} ganhos`;
+      else if (followUp && followUp !== lead.followUp)
+        extra = `, follow-up ${fmtBR(followUp)}`;
+      toast(
+        `<b>${lead.empresa}</b> — status alterado para <b style="color:${stColor(
+          status
+        )}">${status}</b>${extra}.`
+      );
+
       startTransition(async () => {
-        const updated = await actions.setStatus(id, status);
-        replaceLead(updated);
-        if (updated) {
-          let extra = "";
-          if (status === "Fechado" && updated.valor)
-            extra = ` — ${brl(updated.valor)} ganhos`;
-          else if (updated.followUp && updated.followUp !== lead.followUp)
-            extra = `, follow-up ${updated.followUp.split("-").reverse().join("/")}`;
-          toast(
-            `<b>${updated.empresa}</b> — status alterado para <b style="color:${stColor(
-              status
-            )}">${status}</b>${extra}.`
-          );
-        }
+        replaceLead(await actions.setStatus(id, status));
       });
     },
-    [leads, replaceLead, toast]
+    [leads, patchLeadLocal, replaceLead, toast]
   );
 
   const setField = useCallback(
     (id: number, field: LeadField, value: string | number | null) => {
+      patchLeadLocal(id, { [field]: value } as Partial<Lead>);
       startTransition(async () => {
         replaceLead(await actions.setField(id, field, value));
       });
     },
-    [replaceLead]
+    [patchLeadLocal, replaceLead]
   );
 
   const setPhone = useCallback(
     (id: number, which: 1 | 2, value: string) => {
+      const link = phoneLink(value);
+      patchLeadLocal(
+        id,
+        which === 2
+          ? { contato2: value || null, whatsapp2: link }
+          : { contato: value || null, whatsapp: link }
+      );
       startTransition(async () => {
-        const updated = await actions.setPhone(id, which, value);
-        replaceLead(updated);
-        toast(
-          phoneLink(value)
-            ? `Número salvo — link do WhatsApp ${which === 2 ? "2 " : ""}gerado`
-            : "Número salvo",
-          "info"
-        );
+        replaceLead(await actions.setPhone(id, which, value));
       });
+      toast(
+        link
+          ? `Número salvo — link do WhatsApp ${which === 2 ? "2 " : ""}gerado`
+          : "Número salvo",
+        "info"
+      );
     },
-    [replaceLead, toast]
+    [patchLeadLocal, replaceLead, toast]
   );
 
   const markContact = useCallback(
     (id: number) => {
+      const lead = leads.find((l) => l.id === id);
+      patchLeadLocal(id, { ultimoContato: today() });
       startTransition(async () => {
-        const updated = await actions.markContactToday(id);
-        replaceLead(updated);
-        if (updated)
-          toast(`<b>${updated.empresa}</b> — contato de hoje registrado.`, "info");
+        replaceLead(await actions.markContactToday(id));
       });
+      if (lead)
+        toast(`<b>${lead.empresa}</b> — contato de hoje registrado.`, "info");
     },
-    [replaceLead, toast]
+    [leads, patchLeadLocal, replaceLead, toast]
   );
 
   const addNote = useCallback(
@@ -167,20 +191,21 @@ export function CrmProvider({
 
   const snooze = useCallback(
     (id: number) => {
+      const lead = leads.find((l) => l.id === id);
+      if (!lead) return;
+      const base =
+        lead.followUp && lead.followUp > today() ? lead.followUp : today();
+      const followUp = addDays(base, 2);
+      patchLeadLocal(id, { followUp });
       startTransition(async () => {
-        const updated = await actions.snooze(id);
-        replaceLead(updated);
-        if (updated)
-          toast(
-            `<b>${updated.empresa}</b> — follow-up adiado para ${updated.followUp
-              ?.split("-")
-              .reverse()
-              .join("/")}`,
-            "info"
-          );
+        replaceLead(await actions.snooze(id));
       });
+      toast(
+        `<b>${lead.empresa}</b> — follow-up adiado para ${fmtBR(followUp)}`,
+        "info"
+      );
     },
-    [replaceLead, toast]
+    [leads, patchLeadLocal, replaceLead, toast]
   );
 
   const createLead = useCallback(

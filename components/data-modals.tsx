@@ -16,6 +16,32 @@ function download(name: string, content: string, type: string) {
   URL.revokeObjectURL(a.href);
 }
 
+/** Exemplo de arquivo JSON aceito na importação. */
+const EXAMPLE_JSON = `[
+  {
+    "empresa": "Padaria Estrela",
+    "cidade": "Nova Iguaçu",
+    "segmento": "Alimentação",
+    "prioridade": "Alta",
+    "contato": "(21) 99999-1234",
+    "contato2": "(21) 98888-5678",
+    "instagram": "https://instagram.com/padariaestrela",
+    "site": null,
+    "temSite": "Não",
+    "email": "contato@padariaestrela.com",
+    "endereco": "Rua das Flores, 100 - Centro",
+    "situacao": "Instagram ativo, sem site próprio.",
+    "oportunidade": "Cardápio digital e pedidos por WhatsApp.",
+    "status": "Novo",
+    "ultimoContato": null,
+    "followUp": "2026-07-20",
+    "valor": 1500,
+    "responsavel": "Lucas",
+    "obs": "Indicação de cliente.",
+    "mensagem": "Olá! Tudo bem? Trabalho com criação de sites..."
+  }
+]`;
+
 export function ImportModal({ onClose }: { onClose: () => void }) {
   const { importLeads } = useCrm();
   const toast = useToast();
@@ -92,6 +118,67 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
         {log.length > 0 && (
           <div className="imp-log">{log.join("\n")}</div>
         )}
+
+        <div style={{ marginTop: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 8,
+            }}
+          >
+            <h4
+              style={{
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: 0.9,
+                color: "var(--muted)",
+                fontWeight: 700,
+                flex: 1,
+              }}
+            >
+              Como preparar o JSON
+            </h4>
+            <button
+              className="btn sm"
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(EXAMPLE_JSON)
+                  .then(() => toast("Exemplo copiado", "info"));
+              }}
+            >
+              <Icon name="copy" size={13} /> Copiar exemplo
+            </button>
+            <button
+              className="btn sm"
+              onClick={() =>
+                download(
+                  "exemplo_importacao.json",
+                  EXAMPLE_JSON,
+                  "application/json"
+                )
+              }
+            >
+              <Icon name="export" size={13} /> Baixar exemplo
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>
+            Envie uma <b>lista</b> de objetos. Só <b>empresa</b> é obrigatório;
+            os demais campos são opcionais. Datas no formato{" "}
+            <b>AAAA-MM-DD</b>; <b>prioridade</b>: Muito alta / Alta / Média /
+            Baixa; <b>status</b>: Novo, Contato enviado, Respondeu,
+            Interessado, Orçamento enviado, Fechado... O link do WhatsApp é
+            gerado automaticamente a partir do <b>contato</b>.
+          </p>
+          <pre
+            className="imp-log"
+            style={{ maxHeight: 220, display: "block" }}
+          >
+            {EXAMPLE_JSON}
+          </pre>
+        </div>
+
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
           <button className="btn sm" onClick={onClose}>
             Fechar

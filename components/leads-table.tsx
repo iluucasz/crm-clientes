@@ -3,6 +3,7 @@
 import { useCrm } from "./crm-context";
 import { FiltersBar } from "./filters-bar";
 import { Icon } from "./icon";
+import { ValorInput } from "./valor-input";
 import { filterLeads } from "@/lib/selectors";
 import { CLOSED, PRIO_COLORS, STATUSES, stColor } from "@/lib/domain";
 import { today } from "@/lib/format";
@@ -119,16 +120,9 @@ export function LeadsTable() {
                     />
                   </td>
                   <td onClick={stop}>
-                    <input
-                      type="number"
-                      className="num-in"
-                      placeholder="0,00"
-                      min="0"
-                      step="50"
-                      value={l.valor ?? ""}
-                      onChange={(e) =>
-                        setField(l.id, "valor", e.target.value || null)
-                      }
+                    <ValorInput
+                      value={l.valor}
+                      onCommit={(v) => setField(l.id, "valor", v)}
                     />
                   </td>
                   <td onClick={stop}>
