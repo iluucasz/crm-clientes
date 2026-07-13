@@ -1,11 +1,12 @@
-// Padroniza mensagens de WhatsApp por segmento e preenche um valor aproximado
-// (estimativa de orçamento) para cada lead.
+// Padroniza mensagens de WhatsApp por segmento (com variação natural, para não
+// ficarem robotizadas) e preenche um valor aproximado por lead.
 //
-// - Mensagem: gerada com uma observação profissional adequada ao segmento,
-//   sempre com o mesmo padrão (saudação, apresentação, observação, portfólio
-//   atualizado e chamada final). Isso deixa TODOS os leads no mesmo nível.
-// - Valor: estimado pelo tipo de negócio; só preenche onde ainda está vazio
-//   (não sobrescreve orçamentos que você já definiu).
+// - Cada lead recebe uma combinação de frases (saudação, apresentação, elogio,
+//   fechamento) escolhida de forma determinística pelo id — assim os textos
+//   variam entre si e soam humanos, sem ficarem idênticos.
+// - A saudação fica como "Boa tarde!" no texto salvo, mas é ajustada ao horário
+//   (Bom dia / Boa tarde / Boa noite) na hora de enviar/copiar, pelo app.
+// - Valor: estimado pelo tipo de negócio; só preenche onde ainda está vazio.
 //
 // Uso: node --env-file=.env scripts/standardize-leads.mjs
 //       node --env-file=.env scripts/standardize-leads.mjs --seed-only
@@ -25,89 +26,119 @@ const LINKS = {
   sistema: "https://pulse.seusdados.com/",
 };
 
-/**
- * Regras por segmento: observação personalizada, exemplos de portfólio e
- * valor estimado do serviço (em reais).
- */
+/** Regras por segmento: observação (tom mais humano), exemplos e valor. */
 function profileFor(segmento) {
   const s = (segmento || "").toLowerCase();
-  const wa = "mantendo o WhatsApp como principal canal de atendimento";
+  const wa = "sem abrir mão do WhatsApp como canal principal de atendimento";
 
   if (/foto|est[uú]dio|storymaker/.test(s))
     return {
-      obs: `Pelo que observei, o seu trabalho tem um forte apelo visual e um site-portfólio próprio poderia organizar os ensaios por categoria, transmitir mais autoridade e facilitar novos pedidos de orçamento, ${wa}.`,
+      obs: `Reparei que o seu trabalho tem um apelo visual bem forte, e um site-portfólio próprio ajudaria a organizar os ensaios por categoria, passar mais autoridade e receber novos pedidos com mais facilidade — tudo isso ${wa}.`,
       links: [LINKS.servico, LINKS.vitrine],
       valor: 1000,
     };
   if (/moda|loja|atacado|distribuidora|vestu|roupa|venda/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio poderia apresentar seus produtos de forma mais organizada e profissional, com catálogo e pedidos online, ${wa}.`,
+      obs: `Acredito que um site próprio deixaria seus produtos bem mais fáceis de apresentar, com catálogo e pedidos online, ${wa}.`,
       links: [LINKS.ecommerce, LINKS.servico],
       valor: 1500,
     };
   if (/odonto|cl[íi]nic|m[ée]dic|dental|sa[úu]de/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio poderia apresentar os tratamentos com mais clareza, transmitir confiança e organizar os agendamentos, ${wa}.`,
+      obs: `Acho que um site próprio ajudaria bastante a explicar os tratamentos com clareza, passar confiança para quem ainda não conhece e organizar os agendamentos, ${wa}.`,
       links: [LINKS.servico, LINKS.ecommerce],
       valor: 1200,
     };
   if (/est[ée]tica|sal[ãa]o|beleza|est[ée]tico/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio poderia apresentar cada procedimento com mais clareza e transmitir confiança antes do agendamento, ${wa}.`,
+      obs: `Acho que um site próprio ajudaria a mostrar cada procedimento com mais clareza e a passar confiança antes do agendamento, ${wa}.`,
       links: [LINKS.servico, LINKS.ecommerce],
       valor: 1000,
     };
   if (/pilates|fisio|movimento|massag/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio poderia apresentar suas modalidades e a estrutura do espaço com mais clareza, transmitir confiança e facilitar o agendamento, ${wa}.`,
+      obs: `Acho que um site próprio ajudaria a apresentar as modalidades e a estrutura do espaço com mais clareza, passar confiança e facilitar o agendamento, ${wa}.`,
       links: [LINKS.servico, LINKS.ecommerce],
       valor: 1000,
     };
   if (/restaurante|bar|hamb|pizza|alimenta|gastro|lanch|caf[ée]/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio poderia apresentar o cardápio de forma mais organizada e atraente, com pedidos direto pelo WhatsApp, transmitindo mais profissionalismo para o seu público.`,
+      obs: `Acredito que um site próprio deixaria o cardápio bem mais organizado e convidativo, com pedidos direto pelo WhatsApp, passando ainda mais profissionalismo para o seu público.`,
       links: [LINKS.servico, LINKS.vitrine],
       valor: 1000,
     };
   if (/event|festa|s[ií]tio|espa[çc]o|cowork|casamento|loca[çc]/.test(s))
     return {
-      obs: `Pelo que observei, um site próprio com galeria, estrutura e pedido de orçamento poderia transmitir muito mais confiança para quem está escolhendo o local, ${wa}.`,
+      obs: `Acredito que um site com galeria, estrutura e um espaço para pedir orçamento passaria muito mais confiança para quem está escolhendo o local, ${wa}.`,
       links: [LINKS.vitrine, LINKS.servico],
       valor: 1200,
     };
   if (/tatuagem|piercing|tattoo/.test(s))
     return {
-      obs: `Pelo que observei, um site-portfólio próprio poderia organizar seus trabalhos por estilo, transmitir mais autoridade e facilitar os agendamentos, ${wa}.`,
+      obs: `Reparei que faz sentido um site-portfólio próprio para organizar seus trabalhos por estilo, passar mais autoridade e facilitar os agendamentos, ${wa}.`,
       links: [LINKS.servico, LINKS.vitrine],
       valor: 1000,
     };
   return {
-    obs: `Pelo que observei, um site próprio poderia apresentar o seu trabalho de forma mais organizada e profissional, transmitir mais confiança e facilitar o contato, ${wa}.`,
+    obs: `Acredito que um site próprio ajudaria a apresentar o seu trabalho de forma mais organizada e profissional, passar mais confiança e facilitar o contato, ${wa}.`,
     links: [LINKS.servico, LINKS.ecommerce],
     valor: 1000,
   };
 }
 
-function buildMessage(empresa, segmento) {
+// Variações escolhidas pelo id (determinístico e estável, mas variado).
+const pick = (arr, n) => arr[(((n % arr.length) + arr.length) % arr.length)];
+
+const SAUD = ["Tudo bem?", "Tudo certo?", "Como vai?", "Tudo tranquilo?"];
+const INTRO = [
+  "Me chamo Lucas e trabalho com criação e melhoria de sites.",
+  "Aqui é o Lucas, eu trabalho criando e melhorando sites.",
+  "Meu nome é Lucas e trabalho com desenvolvimento de sites.",
+];
+const CONHECI = [
+  "Conheci o trabalho da {e} e gostei bastante do que vocês fazem.",
+  "Cheguei até a {e} pelas redes e curti muito a forma como vocês trabalham.",
+  "Vim conhecer a {e} por aqui e achei o trabalho de vocês muito bacana.",
+  "Andei acompanhando a {e} e gostei bastante da proposta de vocês.",
+];
+const EXEMPLOS = [
+  "aqui alguns sites que fiz recentemente:",
+  "dá uma olhada em alguns trabalhos recentes:",
+  "separei alguns exemplos que desenvolvi:",
+];
+const OUTROS = [
+  "e tem bastante coisa por lá também.",
+  "tem vários outros no portfólio.",
+  "há mais exemplos no portfólio, se quiser ver.",
+];
+const FECHO = [
+  "Se fizer sentido pra você, monto uma ideia inicial pensada pra {e}, sem compromisso — é só me chamar.",
+  "Se topar, eu preparo uma primeira ideia pra {e}, sem nenhum compromisso.",
+  "Caso queira, posso te enviar uma sugestão inicial pra {e}, sem compromisso algum.",
+  "Se curtir a ideia, faço uma proposta inicial pra {e} sem compromisso, é só avisar.",
+];
+
+function buildMessage(empresa, segmento, id) {
   const { obs, links } = profileFor(segmento);
-  return `Boa tarde! Tudo bem?
+  const rep = (t) => t.replaceAll("{e}", empresa);
+  return `Boa tarde! ${pick(SAUD, id)}
 
-Me chamo Lucas e trabalho com criação e melhoria de sites.
+${pick(INTRO, id + 1)}
 
-Conheci o trabalho da ${empresa} e achei a proposta de vocês muito interessante.
+${rep(pick(CONHECI, id + 2))}
 
 ${obs}
 
 Este é o meu portfólio:
 ${LINKS.portfolio}
 
-alguns sites que desenvolvi recentemente:
+${pick(EXEMPLOS, id + 1)}
 ${links[0]}
 ${links[1]}
 
-há vários outros exemplos no portfólio.
+${pick(OUTROS, id + 3)}
 
-Se fizer sentido para você, posso preparar uma ideia inicial pensada para a ${empresa}, sem compromisso.`;
+${rep(pick(FECHO, id))}`;
 }
 
 function updateSeedFile() {
@@ -115,7 +146,7 @@ function updateSeedFile() {
   const seed = JSON.parse(readFileSync(path, "utf8"));
   for (const l of seed) {
     const p = profileFor(l.segmento);
-    l.mensagem = buildMessage(l.empresa, l.segmento);
+    l.mensagem = buildMessage(l.empresa, l.segmento, l.id);
     if (l.valor == null) l.valor = p.valor;
   }
   writeFileSync(path, JSON.stringify(seed, null, 2));
@@ -128,7 +159,7 @@ async function updateDatabase() {
   console.log(`• Padronizando ${rows.length} leads no banco...`);
   for (const r of rows) {
     const p = profileFor(r.segmento);
-    const msg = buildMessage(r.empresa, r.segmento);
+    const msg = buildMessage(r.empresa, r.segmento, r.id);
     await sql`UPDATE leads
       SET mensagem = ${msg},
           valor = COALESCE(valor, ${p.valor}),
@@ -138,7 +169,7 @@ async function updateDatabase() {
   const [{ semvalor }] =
     await sql`SELECT count(*)::int AS semvalor FROM leads WHERE valor IS NULL`;
   console.log(
-    `✓ Banco padronizado: ${rows.length} mensagens, valores estimados preenchidos (${semvalor} ainda sem valor).`
+    `✓ Banco padronizado: ${rows.length} mensagens (com variação), valores preenchidos (${semvalor} ainda sem valor).`
   );
 }
 

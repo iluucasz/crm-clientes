@@ -38,6 +38,24 @@ export function fmtStamp(iso: string): string {
   );
 }
 
+/** Saudação adequada ao horário atual (fuso local do usuário). */
+export function greetingNow(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Bom dia";
+  if (h >= 12 && h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+/**
+ * Substitui uma saudação inicial (Bom dia / Boa tarde / Boa noite) pela
+ * saudação correta para o horário atual — usado ao copiar/enviar a mensagem,
+ * para nunca mandar "Boa tarde" às 9h da manhã.
+ */
+export function withCurrentGreeting(text: string | null | undefined): string {
+  if (!text) return text ?? "";
+  return text.replace(/^\s*(bom dia|boa tarde|boa noite)/i, greetingNow());
+}
+
 /**
  * Gera o link do WhatsApp (wa.me) a partir de um texto de telefone.
  * Retorna `null` se o número não for válido.

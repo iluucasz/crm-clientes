@@ -332,7 +332,8 @@ export function LeadDrawer() {
                     marginTop: 6,
                   }}
                 >
-                  Salva ao sair do campo. É o texto enviado ao clicar em WhatsApp.
+                  Salva ao sair do campo. Ao enviar ou copiar, a saudação (Bom
+                  dia / Boa tarde / Boa noite) se ajusta sozinha ao horário.
                 </div>
               </div>
 

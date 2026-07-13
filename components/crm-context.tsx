@@ -12,7 +12,14 @@ import {
 import type { Lead, NewLeadInput } from "@/lib/types";
 import type { LeadField } from "@/lib/repository/leads";
 import { defaultFilters, type Filters } from "@/lib/selectors";
-import { addDays, brl, fmtBR, phoneLink, today } from "@/lib/format";
+import {
+  addDays,
+  brl,
+  fmtBR,
+  phoneLink,
+  today,
+  withCurrentGreeting,
+} from "@/lib/format";
 import { CLOSED, statusConfig, stColor } from "@/lib/domain";
 import * as actions from "@/app/actions/leads";
 import { useToast } from "./toast";
@@ -254,7 +261,7 @@ export function CrmProvider({
       const wa = which === 2 ? lead.whatsapp2 : lead.whatsapp;
       if (!wa) return;
       const url = lead.mensagem
-        ? `${wa}?text=${encodeURIComponent(lead.mensagem)}`
+        ? `${wa}?text=${encodeURIComponent(withCurrentGreeting(lead.mensagem))}`
         : wa;
       window.open(url, "_blank");
       startTransition(async () => {
@@ -269,7 +276,7 @@ export function CrmProvider({
       const lead = leads.find((l) => l.id === id);
       if (!lead?.mensagem) return;
       navigator.clipboard
-        .writeText(lead.mensagem)
+        .writeText(withCurrentGreeting(lead.mensagem))
         .then(() => toast(`Mensagem de <b>${lead.empresa}</b> copiada`, "info"))
         .catch(() => toast("Não foi possível copiar", "err"));
     },
