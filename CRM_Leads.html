@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM de Leads — Lucas | dev-lss</title>
+<style>
+:root{
+  --bg:#0c0f14; --bg2:#12161d; --card:#171c25; --card2:#1d232f; --border:#262d3a;
+  --text:#e6e9ef; --muted:#8a93a3; --accent:#4f6ef7; --accent2:#7b93ff;
+  --green:#2eb872; --blue:#3b82f6; --yellow:#d4a017; --orange:#e8763a;
+  --red:#d94f4f; --purple:#8b5cf6; --cyan:#2aa8c4; --pink:#d0679d; --gray:#64748b;
+  --shadow:0 8px 24px rgba(0,0,0,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2b3342;border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:#39435a}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:-2px}
+
+.app{display:flex;height:100vh}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:228px;min-width:228px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 12px;gap:3px}
+.logo{display:flex;align-items:center;gap:10px;padding:6px 10px 20px}
+.logo .ic{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff}
+.logo b{font-size:15px;display:block;letter-spacing:.2px}
+.logo span{font-size:11px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:500;transition:all .18s;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(79,110,247,.12);color:var(--accent2);border-color:rgba(79,110,247,.28)}
+.nav-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;display:none}
+.nav-item .badge.show{display:inline-block}
+.sidebar .spacer{flex:1}
+.sidebar .sep{border-top:1px solid var(--border);margin:8px 6px}
+.side-foot{font-size:11px;color:var(--muted);padding:12px 13px 2px;border-top:1px solid var(--border)}
+.side-foot b{color:var(--accent2)}
+
+/* ===== MAIN ===== */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.topbar h1{font-size:17px;font-weight:600}
+.topbar .sub{font-size:12px;color:var(--muted)}
+.search-box{margin-left:auto;position:relative;color:var(--muted)}
+.search-box input{background:var(--card);border:1px solid var(--border);color:var(--text);padding:9px 14px 9px 36px;border-radius:9px;width:250px;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,.14)}
+.search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;text-decoration:none}
+.btn:hover{background:var(--card2);border-color:#35405a}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+.btn.primary:hover{background:#6079f8;box-shadow:0 3px 14px rgba(79,110,247,.35)}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+.content{flex:1;overflow:hidden;padding:20px 22px;display:flex;flex-direction:column;min-height:0}
+.view{display:none;animation:fadeUp .25s ease;flex:1;min-height:0;overflow-y:auto}
+.view.active{display:block}
+#view-leads.active,#view-pipeline.active{display:flex;flex-direction:column}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== KPI CARDS ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:13px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px 17px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.kpi::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--kc,var(--accent))}
+.kpi .lbl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.7px}
+.kpi .val{font-size:27px;font-weight:700;margin-top:5px}
+.kpi .delta{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+/* ===== PANELS/CHARTS ===== */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+.grid-3{display:grid;grid-template-columns:2fr 1fr;gap:15px;margin-bottom:15px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:17px}
+.panel h3{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel h3 .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px}
+.hbar-row .nm{width:140px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.hbar-row .tr{flex:1;background:var(--bg2);border-radius:5px;height:21px;overflow:hidden}
+.hbar-row .fl{height:100%;border-radius:5px;display:flex;align-items:center;justify-content:flex-end;padding:0 8px;font-size:11px;font-weight:700;color:#fff;min-width:24px;transition:width .8s cubic-bezier(.25,.8,.25,1);white-space:nowrap}
+.donut-wrap{display:flex;align-items:center;gap:22px;justify-content:center;flex-wrap:wrap}
+.legend{display:flex;flex-direction:column;gap:8px}
+.legend .li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.legend .sw{width:10px;height:10px;border-radius:3px}
+.legend b{color:var(--text)}
+.funnel{display:flex;flex-direction:column;gap:5px;align-items:center}
+.fstep{border-radius:7px;padding:7px 14px;color:#fff;font-size:12px;font-weight:600;text-align:center;transition:width .8s ease;display:flex;justify-content:space-between;gap:14px;min-width:190px}
+
+/* ===== FILTERS BAR ===== */
+.filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center;flex-shrink:0}
+.filters select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12.5px;outline:none;cursor:pointer}
+.filters select:focus{border-color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.chip:hover{color:var(--text)}
+.chip.on{background:rgba(79,110,247,.14);border-color:var(--accent);color:var(--accent2);font-weight:600}
+.count-info{margin-left:auto;font-size:12px;color:var(--muted)}
+
+/* ===== TABLE ===== */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:auto;flex:1;min-height:0}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1080px}
+thead th{position:sticky;top:0;background:var(--card2);z-index:5;text-align:left;padding:11px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid var(--border)}
+thead th:hover{color:var(--text)}
+tbody tr{border-bottom:1px solid rgba(38,45,58,.6);transition:background .15s;cursor:pointer;border-left:3px solid transparent}
+tbody tr:hover{background:rgba(79,110,247,.06)}
+tbody td{padding:9px 14px;vertical-align:middle;white-space:nowrap}
+.td-emp b{display:block;font-size:13.5px;font-weight:600}
+.td-emp span{font-size:11.5px;color:var(--muted)}
+.status-sel{border:none;border-radius:6px;padding:6px 26px 6px 11px;font-size:11.5px;font-weight:600;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:background-color .3s;color:#fff}
+.prio-pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px}
+.date-in{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;outline:none;font-family:inherit;color-scheme:dark}
+.date-in:focus{border-color:var(--accent)}
+.date-in.overdue{border-color:var(--red);color:var(--red);font-weight:600}
+.date-in.today{border-color:var(--orange);color:var(--orange);font-weight:600}
+.num-in{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;outline:none;width:92px;font-family:inherit}
+.num-in:focus{border-color:var(--accent)}
+.flash{animation:flashRow 1.2s ease}
+@keyframes flashRow{0%{background:rgba(46,184,114,.22)}100%{background:transparent}}
+.ico-btn{background:none;border:none;cursor:pointer;padding:5px 6px;border-radius:6px;transition:all .15s;color:var(--muted);display:inline-flex;align-items:center;text-decoration:none}
+.ico-btn:hover{background:var(--bg2);color:var(--text)}
+
+/* ===== KANBAN ===== */
+.kanban{display:flex;gap:13px;overflow-x:auto;overflow-y:hidden;padding-bottom:10px;align-items:stretch;flex:1;min-height:0}
+.kcol{min-width:258px;width:258px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px;flex-shrink:0;transition:all .2s;display:flex;flex-direction:column;max-height:100%}
+.kcol.dragover{border-color:var(--accent);background:rgba(79,110,247,.07)}
+.kcol-head{display:flex;align-items:center;gap:8px;padding:4px 6px 11px;font-size:12.5px;font-weight:600}
+.kcol-head .kdot{width:8px;height:8px;border-radius:50%}
+.kcol-head .knum{margin-left:auto;font-size:11px;background:var(--bg2);padding:2px 9px;border-radius:10px;color:var(--muted)}
+.kcards{display:flex;flex-direction:column;gap:8px;min-height:40px;overflow-y:auto;flex:1}
+.kcard{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:grab;transition:all .18s;border-left:3px solid var(--sc,var(--gray))}
+.kcard:hover{box-shadow:var(--shadow);border-color:#35405a;border-left-color:var(--sc,var(--gray))}
+.kcard.dragging{opacity:.4}
+.kcard b{font-size:12.5px;display:block;margin-bottom:2px;font-weight:600}
+.kcard .kmeta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.kcard .kmeta span{background:var(--bg2);padding:2px 8px;border-radius:5px}
+.kcard .kfu{font-size:11px;margin-top:6px;font-weight:600}
+
+/* ===== FOLLOW-UP LISTS ===== */
+.fu-sec{margin-bottom:20px}
+.fu-sec h3{font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;gap:9px;font-weight:600}
+.fu-sec h3 .dot{width:8px;height:8px;border-radius:50%}
+.fu-item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:7px;transition:all .15s;cursor:pointer}
+.fu-item:hover{border-color:#35405a}
+.fu-item .fud{font-size:12px;font-weight:700;min-width:86px}
+.fu-item .fue b{display:block;font-size:13.5px;font-weight:600}
+.fu-item .fue span{font-size:11.5px;color:var(--muted)}
+.fu-empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;background:var(--card);border:1px dashed var(--border);border-radius:10px}
+
+/* ===== DRAWER ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(2px)}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:-640px;width:620px;max-width:95vw;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:50;transition:right .3s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.5)}
+.drawer.open{right:0}
+.drawer-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.drawer-head h2{font-size:18px;font-weight:600}
+.drawer-head .sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+.drawer-body{flex:1;overflow-y:auto;padding:20px 24px}
+.dsec{margin-bottom:20px}
+.dsec h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:10px;font-weight:700}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dfield label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600}
+.dfield .dval{font-size:13px;word-break:break-word}
+.dfield input,.dfield select,.dfield textarea{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:8px;font-size:13px;outline:none;font-family:inherit;color-scheme:dark}
+.dfield input:focus,.dfield select:focus,.dfield textarea:focus{border-color:var(--accent)}
+.dfield textarea{resize:vertical;min-height:70px}
+.msg-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12.5px;white-space:pre-wrap;line-height:1.55;max-height:250px;overflow-y:auto;color:#c4cdda}
+.dlinks{display:flex;gap:8px;flex-wrap:wrap}
+.hist{border-left:2px solid var(--border);padding-left:14px;display:flex;flex-direction:column;gap:10px}
+.hist .hi{font-size:12px;position:relative}
+.hist .hi::before{content:'';position:absolute;left:-19px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.hist .hi .ht{color:var(--muted);font-size:11px}
+
+/* ===== MODAL ===== */
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.modal.open{display:flex;animation:fadeUp .22s ease}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:560px;max-width:94vw;max-height:88vh;overflow-y:auto;padding:24px}
+.modal-box h2{font-size:16px;margin-bottom:18px;display:flex;align-items:center;gap:9px;font-weight:600}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(79,110,247,.06);color:var(--accent2)}
+.drop-zone svg.i{width:32px;height:32px;display:block;margin:0 auto 10px;stroke-width:1.5}
+.imp-log{font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px;max-height:170px;overflow-y:auto;display:none;white-space:pre-wrap;line-height:1.6}
+
+/* ===== TOAST ===== */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:100;display:flex;flex-direction:column;gap:9px}
+.toast{background:var(--card2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:9px;padding:12px 17px;font-size:13px;box-shadow:var(--shadow);animation:slideIn .3s ease;display:flex;align-items:center;gap:10px;max-width:400px;line-height:1.45}
+.toast.warn{border-left-color:var(--orange)}
+.toast.err{border-left-color:var(--red)}
+.toast.info{border-left-color:var(--blue)}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+.toast.out{animation:slideOut .3s ease forwards}
+@keyframes slideOut{to{transform:translateX(110%);opacity:0}}
+
+@media(max-width:900px){
+  .sidebar{width:60px;min-width:60px}
+  .sidebar .nav-item span.tx,.logo div,.side-foot{display:none}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .drawer{width:100vw}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="ic"><svg class="i" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><div><b>CRM Leads</b><span>dev-lss.com</span></div></div>
+    <div class="nav-item active" data-view="dashboard"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span class="tx">Dashboard</span></div>
+    <div class="nav-item" data-view="leads"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="tx">Leads</span></div>
+    <div class="nav-item" data-view="pipeline"><svg class="i" viewBox="0 0 24 24"><path d="M6 5v11"/><path d="M12 5v6"/><path d="M18 5v14"/></svg><span class="tx">Pipeline</span></div>
+    <div class="nav-item" data-view="followups"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="tx">Follow-ups</span><span class="badge" id="fuBadge"></span></div>
+    <div class="spacer"></div>
+    <div class="sep"></div>
+    <div class="nav-item" onclick="openImport()"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg><span class="tx">Importar leads</span></div>
+    <div class="nav-item" onclick="exportMenu()"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 8l5-5 5 5"/><path d="M12 3v12"/></svg><span class="tx">Exportar / Backup</span></div>
+    <div class="side-foot">Feito para <b>Lucas</b><br><span id="footInfo"></span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub"></div></div>
+      <div class="search-box"><svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="globalSearch" placeholder="Buscar empresa, cidade, segmento..." oninput="state.search=this.value;renderAll()"></div>
+      <button class="btn primary" onclick="openNewLead()"><svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Novo lead</button>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="grid-3">
+          <div class="panel"><h3><span class="dot"></span>Leads por status</h3><div id="chartStatus"></div></div>
+          <div class="panel"><h3><span class="dot" style="background:var(--purple)"></span>Funil de conversão</h3><div class="funnel" id="chartFunnel"></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel"><h3><span class="dot" style="background:var(--cyan)"></span>Prioridade</h3><div class="donut-wrap" id="chartPrio"></div></div>
+          <div class="panel"><h3><span class="dot" style="background:var(--orange)"></span>Top cidades</h3><div id="chartCidade"></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel"><h3><span class="dot" style="background:var(--pink)"></span>Top segmentos</h3><div id="chartSeg"></div></div>
+          <div class="panel"><h3><span class="dot" style="background:var(--red)"></span>Próximos follow-ups</h3><div id="dashFu"></div></div>
+        </div>
+      </div>
+
+      <!-- LEADS TABLE -->
+      <div class="view" id="view-leads">
+        <div class="filters">
+          <select id="fStatus" onchange="state.fStatus=this.value;renderAll()"><option value="">Status: todos</option></select>
+          <select id="fPrio" onchange="state.fPrio=this.value;renderAll()"><option value="">Prioridade: todas</option></select>
+          <select id="fCidade" onchange="state.fCidade=this.value;renderAll()"><option value="">Cidade: todas</option></select>
+          <select id="fSeg" onchange="state.fSeg=this.value;renderAll()"><option value="">Segmento: todos</option></select>
+          <span class="chip" id="chipFu" onclick="state.onlyFu=!state.onlyFu;this.classList.toggle('on');renderAll()">Follow-up pendente</span>
+          <span class="chip" onclick="clearFilters()">Limpar filtros</span>
+          <span class="count-info" id="countInfo"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th onclick="sortBy('empresa')">Empresa</th>
+              <th onclick="sortBy('cidade')">Cidade</th>
+              <th onclick="sortBy('prioridade')">Prioridade</th>
+              <th>Status</th>
+              <th onclick="sortBy('ultimoContato')">Último contato</th>
+              <th onclick="sortBy('followUp')">Follow-up</th>
+              <th onclick="sortBy('valor')">Orçamento (R$)</th>
+              <th>Ações</th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div class="view" id="view-pipeline">
+        <div class="kanban" id="kanban"></div>
+      </div>
+
+      <!-- FOLLOW-UPS -->
+      <div class="view" id="view-followups">
+        <div class="fu-sec"><h3><span class="dot" style="background:var(--red)"></span>Atrasados</h3><div id="fuLate"></div></div>
+        <div class="fu-sec"><h3><span class="dot" style="background:var(--orange)"></span>Hoje</h3><div id="fuToday"></div></div>
+        <div class="fu-sec"><h3><span class="dot" style="background:var(--green)"></span>Próximos 7 dias</h3><div id="fuNext"></div></div>
+        <div class="fu-sec"><h3><span class="dot" style="background:var(--gray)"></span>Sem follow-up definido (leads ativos)</h3><div id="fuNone"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div style="flex:1"><h2 id="dTitle"></h2><div class="sub" id="dSub"></div></div>
+    <button class="ico-btn" onclick="closeDrawer()"><svg class="i" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- MODAL IMPORT -->
+<div class="modal" id="modalImport">
+  <div class="modal-box">
+    <h2>Importar leads (XLSX / CSV / JSON)</h2>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+      Arraste um arquivo aqui ou clique para selecionar<br>
+      <small>Aceita .xlsx (mesma estrutura da planilha original), .csv ou backup .json</small>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.csv,.json" style="display:none">
+    <div class="imp-log" id="impLog"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modalImport')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORT -->
+<div class="modal" id="modalExport">
+  <div class="modal-box">
+    <h2>Exportar / Backup</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn" onclick="exportCSV()"><svg class="i" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Exportar CSV (abrir no Excel)</button>
+      <button class="btn" onclick="exportJSON()"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 8l5-5 5 5"/><path d="M12 3v12"/></svg>Backup completo (JSON — inclui histórico)</button>
+      <button class="btn danger" onclick="resetData()"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Restaurar dados originais da planilha</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modalExport')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NEW LEAD -->
+<div class="modal" id="modalNew">
+  <div class="modal-box">
+    <h2>Novo lead</h2>
+    <div class="dgrid">
+      <div class="dfield"><label>Empresa *</label><input id="nEmpresa"></div>
+      <div class="dfield"><label>Cidade</label><input id="nCidade"></div>
+      <div class="dfield"><label>Segmento</label><input id="nSegmento"></div>
+      <div class="dfield"><label>Prioridade</label><select id="nPrio"><option>Muito alta</option><option>Alta</option><option selected>Média</option><option>Baixa</option></select></div>
+      <div class="dfield"><label>WhatsApp / contato</label><input id="nContato" placeholder="(21) 99999-9999"></div>
+      <div class="dfield"><label>WhatsApp 2 (opcional)</label><input id="nContato2" placeholder="(21) 98888-8888"></div>
+      <div class="dfield"><label>Instagram</label><input id="nInsta" placeholder="https://instagram.com/..."></div>
+      <div class="dfield"><label>Site</label><input id="nSite"></div>
+      <div class="dfield"><label>Possui site próprio?</label><select id="nTemSite"><option>Não</option><option>Sim</option></select></div>
+    </div>
+    <div class="dfield" style="margin-top:10px"><label>Observações</label><textarea id="nObs"></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal('modalNew')">Cancelar</button>
+      <button class="btn primary" onclick="saveNewLead()">Salvar lead</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ============================================================
+   CRM de Leads — dados originais embutidos
+============================================================ */
+const SEED = [{"id":1,"empresa":"Nossa Moda","cidade":"Belford Roxo","segmento":"Moda feminina","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 96954-2370 / (21) 98873-0688","whatsapp":"https://wa.me/5521969542370","instagram":"https://www.instagram.com/lojasnossamoda/","site":null,"temSite":"Não","email":null,"endereco":"Av. Benjamin Pinto Dias, 1150, Centro, Belford Roxo/RJ","situacao":"Instagram ativo; site próprio não localizado.","oportunidade":"Catálogo/e-commerce com estoque, pedidos por WhatsApp e campanhas para as unidades.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Há outros números públicos; confirmar o canal comercial antes da abordagem.","fonteContato":"https://www.instagram.com/reel/DZYJB3dP2Ta/","fontePresenca":"https://www.instagram.com/lojasnossamoda/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Nossa Moda pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês têm uma presença ativa no Instagram, trabalham com entregas e possuem mais de um contato comercial. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Nossa Moda, sem compromisso."},{"id":2,"empresa":"Mily Modas","cidade":"Belford Roxo","segmento":"Moda feminina","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 97034-2297","whatsapp":"https://wa.me/5521970342297","instagram":"https://www.instagram.com/mily.modas1/","site":"https://milymodas.com/","temSite":"Não","email":"contato@milymodas.com.br","endereco":"Rua Anhanguera, LT 16A, QD 7B, São Bernardo, Belford Roxo/RJ","situacao":"Já possui loja virtual própria.","oportunidade":"Auditoria de conversão, performance, SEO, analytics, automações e manutenção da loja.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Abordar como melhoria do e-commerce, não como criação do zero.","fonteContato":"https://milymodas.com/","fontePresenca":"https://www.instagram.com/mily.modas1/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Mily Modas e dei uma olhada no trabalho de vocês.\n\nPelo que observei, vocês possuíam uma loja virtual e tem uma audiência forte. Trabalho com criação de sites de ecommerce, portfólio, landingpage, modificações de sites além de melhorias em sites existentes, como experiência no celular, velocidade, SEO, organização das páginas e conversão para o WhatsApp.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Mily Modas, sem compromisso."},{"id":3,"empresa":"Day Boutique","cidade":"Nilópolis","segmento":"Moda feminina","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 98300-9222","whatsapp":"https://wa.me/5521983009222","instagram":"https://www.instagram.com/boutiquedayy/","site":null,"temSite":"Não","email":null,"endereco":"Nilópolis/RJ","situacao":"Vendas concentradas em Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Catálogo com tamanhos, preços, disponibilidade e pedidos pelo WhatsApp.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar endereço e número na bio antes do primeiro contato.","fonteContato":"https://www.instagram.com/p/DNImtF5ofoa/","fontePresenca":"https://www.instagram.com/boutiquedayy/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Day Boutique e achei a proposta de vocês bem interessante.\n\nPelo que observei, o perfil apresenta bem as peças e coleções, e um catálogo próprio poderia facilitar a consulta de tamanhos e disponibilidade. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Day Boutique, sem compromisso."},{"id":4,"empresa":"Glamurosa Moda Feminina","cidade":"Nilópolis","segmento":"Moda feminina","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97244-1091","whatsapp":"https://wa.me/5521972441091","instagram":"https://www.instagram.com/glamurosa_m/","site":null,"temSite":"Não","email":null,"endereco":"Rua Professor Alfredo Gonçalves Figueira, 367, Centro, Nilópolis/RJ","situacao":"Instagram ativo; site próprio não localizado.","oportunidade":"Vitrine digital para vestidos, catálogo por ocasião e captação de pedidos.","status":"Contato respondeu","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Número localizado em publicação pública; confirmar na bio atual.","fonteContato":"https://www.instagram.com/reel/DaiOcbZpCF5/","fontePresenca":"https://www.instagram.com/glamurosa_m/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Glamurosa Moda Feminina pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, a loja trabalha com moda feminina e poderia valorizar ainda mais os vestidos e novidades em uma vitrine própria. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Glamurosa Moda Feminina, sem compromisso."},{"id":5,"empresa":"Atacadão das Minas","cidade":"Nilópolis","segmento":"Moda e atacado","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"21 98657-9624","whatsapp":"https://wa.me/5521986579624","instagram":"ATACADAO DAS MINAS| MODA FEMININA & ATACADO (@atacadaodasminas) · Rio de Janeiro, RJ","site":null,"temSite":"Não","email":null,"endereco":"Rua Pedro Álvares Cabral, 132, Centro, Nilópolis/RJ","situacao":"Forte divulgação em redes; site próprio não localizado.","oportunidade":"Catálogo atacadista com pedido mínimo, kits, tabela de preços e atendimento comercial.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Contato veio de publicação pública; confirmar se é o canal principal.","fonteContato":"https://www.instagram.com/reel/DWT9sfQjbWe/","fontePresenca":"https://www.instagram.com/atacadaodasminas/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Atacadão das Minas e dei uma olhada no trabalho de vocês.\n\nPelo que observei, o modelo de atacado combina muito com um catálogo organizado por kits, pedido mínimo e condições para revendedoras. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Atacadão das Minas, sem compromisso."},{"id":6,"empresa":"Harmonni Centro de Estética","cidade":"Mesquita","segmento":"Estética","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 2797-1212","whatsapp":"https://wa.me/552127971212","instagram":"Harmonni Centro de Estética Avançada (@harmonniestetica) · Mesquita, RJ","site":null,"temSite":"Não","email":null,"endereco":"Rua Jorge Lima, 87, Centro, Mesquita/RJ","situacao":"Atendimento e informações concentrados no link da bio.","oportunidade":"Site completo com procedimentos, equipe, resultados, FAQ e agendamento.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"O número é divulgado como WhatsApp pela própria clínica.","fonteContato":"https://www.instagram.com/reel/DAZCoACRGTn/","fontePresenca":"https://www.instagram.com/harmonniestetica/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Harmonni Centro de Estética e achei a proposta de vocês bem interessante.\n\nPelo que observei, vocês oferecem diferentes procedimentos e um site poderia apresentar cada tratamento com mais clareza antes do agendamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nexemplos de sites que desenvolvi:\nhttps://www.helenarodriguez.com.br/\nhttps://liaeluan.com.br/\n\ndentre outros no portfólio.\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Harmonni Centro de Estética, sem compromisso."},{"id":7,"empresa":"Espaço Fisiobell","cidade":"Mesquita","segmento":"Fisioterapia e estética","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 99036-7135 / (21) 3763-3479","whatsapp":"https://wa.me/5521990367135","instagram":"Fisiobell (@espacofisiobell_) · Mesquita, RJ","site":null,"temSite":"Não","email":null,"endereco":"Rua Paulo, 10, Loja A, Centro, Mesquita/RJ","situacao":"Presença concentrada nas redes; site próprio não localizado.","oportunidade":"Separar serviços de fisioterapia e estética, apresentar profissionais e gerar agendamentos.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"O telefone fixo também aparece em diretórios públicos.","fonteContato":"https://www.instagram.com/reel/C1so3JvOW2E/","fontePresenca":"https://www.instagram.com/espacofisiobell_/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Espaço Fisiobell pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês reúnem fisioterapia e estética, e um site ajudaria a organizar esses serviços e direcionar cada paciente corretamente. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nexemplos de sites que desenvolvi:\nhttps://www.helenarodriguez.com.br/\nhttps://liaeluan.com.br/\n\ndentre outros no portfólio.\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Espaço Fisiobell, sem compromisso."},{"id":8,"empresa":"Flora Estética","cidade":"Mesquita","segmento":"Estética","prioridade":"Alta","tipoContato":"WhatsApp e e-mail","contato":"(21) 98350-1156","whatsapp":"https://wa.me/5521983501156","instagram":"https://www.instagram.com/flora.estetica/","site":null,"temSite":"Não","email":"edianafloral@gmail.com","endereco":"Av. das Oliveiras, 65, BNH/Rocha Sobrinho, Mesquita/RJ","situacao":"Instagram ativo; site próprio não localizado.","oportunidade":"Landing pages por tratamento, avaliação inicial e captação de agendamentos.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"WhatsApp e e-mail divulgados publicamente.","fonteContato":"https://www.instagram.com/popular/bnh-mesquita/","fontePresenca":"https://www.instagram.com/flora.estetica/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Flora Estética e dei uma olhada no trabalho de vocês.\n\nPelo que observei, o trabalho com tratamentos faciais, corporais e pós-operatório merece uma apresentação mais completa e profissional. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nexemplos de sites que desenvolvi:\nhttps://www.helenarodriguez.com.br/\nhttps://liaeluan.com.br/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Flora Estética, sem compromisso."},{"id":9,"empresa":"Centro Estética Miriam","cidade":"Mesquita","segmento":"Estética","prioridade":"Média","tipoContato":"Telefone/WhatsApp","contato":"(21) 99843-8522","whatsapp":"https://wa.me/5521997545647","instagram":"https://www.instagram.com/miriamesteticista/","site":null,"temSite":"Não","email":null,"endereco":"Rua Ambrósio, 234, Sala 104, Vila Emil, Mesquita/RJ","situacao":"Perfil profissional; site próprio não localizado.","oportunidade":"Página enxuta com tratamentos, antes/depois autorizado, localização e agendamento.","status":"Contato enviado","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Número obtido em diretório público; confirmar diretamente no Instagram.","fonteContato":"https://redeharmoniza.com/cidade/mesquita-rj/","fontePresenca":"https://www.instagram.com/miriamesteticista/","verificadoEm":"2026-07-13","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Centro Estética Miriam e achei a proposta de vocês bem interessante.\n\nPelo que observei, o atendimento parece bastante personalizado, e uma página própria ajudaria a mostrar os tratamentos e facilitar novos agendamentos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nexemplos de sites que desenvolvi:\nhttps://www.helenarodriguez.com.br/\nhttps://liaeluan.com.br/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Centro Estética Miriam, sem compromisso."},{"id":10,"empresa":"Clínica Mais Sorriso","cidade":"Nova Iguaçu","segmento":"Odontologia","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 99689-8589 / (21) 2591-8589","whatsapp":"https://wa.me/5521996898589","instagram":"https://www.instagram.com/mais_sorriso_odonto/","site":null,"temSite":"Não","email":null,"endereco":"Rua Quintino Bocaiuva, 77, Sobreloja 202, Centro, Nova Iguaçu/RJ","situacao":"Clínica com divulgação ativa; site próprio não localizado.","oportunidade":"Site institucional com tratamentos, convênios, unidades, equipe e avaliação pelo WhatsApp.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Possui múltiplas unidades; verificar se o contato atende todas.","fonteContato":"https://www.instagram.com/reel/DQelWYlicL5/","fontePresenca":"https://www.instagram.com/mais_sorriso_odonto/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Clínica Mais Sorriso pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês oferecem vários tratamentos odontológicos e atendem em mais de uma unidade, algo que um site poderia organizar muito bem. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Clínica Mais Sorriso, sem compromisso."},{"id":11,"empresa":"Renovare Odontologia","cidade":"Nova Iguaçu","segmento":"Odontologia","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 96448-3009","whatsapp":"https://wa.me/5521964483009","instagram":"https://www.instagram.com/renovare_odontologia/","site":null,"temSite":"Não","email":null,"endereco":"Centro, Nova Iguaçu/RJ","situacao":"Instagram ativo; site próprio não localizado.","oportunidade":"Site com especialidades, planos aceitos, equipe, prova social e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar o endereço completo antes de personalizar a mensagem.","fonteContato":"https://www.instagram.com/renovare_odontologia/","fontePresenca":"https://www.instagram.com/renovare_odontologia/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Renovare Odontologia e dei uma olhada no trabalho de vocês.\n\nPelo que observei, um site poderia reunir as especialidades, equipe, localização e informações de atendimento em um único lugar. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Renovare Odontologia, sem compromisso."},{"id":12,"empresa":"Nova Implanto","cidade":"Nova Iguaçu","segmento":"Odontologia","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 99003-9422 / (21) 2018-6199","whatsapp":"https://wa.me/5521990039422","instagram":"https://www.instagram.com/novaimplanto/","site":null,"temSite":"Não","email":null,"endereco":"Nova Iguaçu/RJ","situacao":"Clínica tradicional; site próprio não localizado na busca.","oportunidade":"Site de autoridade e landing pages para implantes, próteses e ortodontia.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Atuação também divulgada no Recreio; segmentar a proposta por unidade.","fonteContato":"https://www.instagram.com/p/DRSXV6vEWKV/","fontePresenca":"https://www.instagram.com/novaimplanto/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Nova Implanto e achei a proposta de vocês bem interessante.\n\nPelo que observei, a clínica possui uma trajetória consolidada e tratamentos de maior valor, como implantes, que se beneficiam bastante de páginas explicativas. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Nova Implanto, sem compromisso."},{"id":13,"empresa":"Dentotal São João de Meriti","cidade":"São João de Meriti","segmento":"Odontologia","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 96813-4437","whatsapp":"https://wa.me/5521968134437","instagram":"https://www.instagram.com/dentotalsaojoao/","site":null,"temSite":"Não","email":null,"endereco":"São João de Meriti/RJ","situacao":"Comunicação ativa nas redes; site próprio não localizado.","oportunidade":"Site premium focado em implantes, estética dental, prova social e geração de avaliações.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar a unidade correta no primeiro contato.","fonteContato":"https://www.instagram.com/dentotalsaojoao/","fontePresenca":"https://www.instagram.com/dentotalsaojoao/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Dentotal São João de Meriti pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, o trabalho com implantes e estética dental combina com uma presença digital mais completa, focada em confiança e agendamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Dentotal São João de Meriti, sem compromisso."},{"id":14,"empresa":"Clínica Dent Sam","cidade":"São João de Meriti","segmento":"Odontologia","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 97535-1797 / (21) 2655-5181","whatsapp":"https://wa.me/5521975351797","instagram":"https://www.instagram.com/clinicadentsam/","site":"https://www.dentsam.com/","temSite":"Sim","email":null,"endereco":"Rua Antonio Teles de Menezes, 33, Centro, São João de Meriti/RJ","situacao":"Já possui site próprio.","oportunidade":"Redesign, melhoria mobile, velocidade, SEO local, conversão e analytics.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Abordar com diagnóstico concreto do site atual.","fonteContato":"https://www.dentsam.com/","fontePresenca":"https://www.instagram.com/clinicadentsam/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Clínica Dent Sam e dei uma olhada no trabalho de vocês.\n\nPelo que observei, vocês já possuem site, e acredito que pode haver espaço para modernizar a experiência no celular e melhorar a captação de pacientes. Trabalho também com melhorias em sites existentes, como experiência no celular, velocidade, SEO, organização das páginas e conversão para o WhatsApp.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Clínica Dent Sam, sem compromisso."},{"id":15,"empresa":"Odonto Meriti","cidade":"São João de Meriti","segmento":"Odontologia","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 97578-6225","whatsapp":"https://wa.me/5521975786225","instagram":"https://www.instagram.com/odonto.meriti/","site":"https://www.odontomeriti.com.br/","temSite":"Sim","email":null,"endereco":"Av. Getúlio de Moura, 1356, Vila Tiradentes, São João de Meriti/RJ","situacao":"Já possui site próprio.","oportunidade":"Auditoria de UX, SEO local, velocidade, tracking e landing pages de tratamentos.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Usar uma análise objetiva do site atual como abertura.","fonteContato":"https://www.instagram.com/odonto.meriti/","fontePresenca":"https://www.odontomeriti.com.br/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Odonto Meriti e achei a proposta de vocês bem interessante.\n\nPelo que observei, vocês já possuem presença própria na internet, e uma análise de velocidade, experiência mobile e SEO local pode trazer ganhos. Trabalho também com melhorias em sites existentes, como experiência no celular, velocidade, SEO, organização das páginas e conversão para o WhatsApp.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Odonto Meriti, sem compromisso."},{"id":16,"empresa":"Na Chapa Pão e Alho","cidade":"Queimados","segmento":"Hamburgueria","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97604-0498","whatsapp":"https://wa.me/5521976040498","instagram":"https://www.instagram.com/nachapapaoealho/","site":"https://pedido.anota.ai/loja/na-chapa-po-e-alho-hamburgueria?f=msa","temSite":"Não","email":null,"endereco":"Estrada do Lazareto, 359, São Roque, Queimados/RJ","situacao":"Usa plataforma de pedidos de terceiros; site próprio não localizado.","oportunidade":"Cardápio próprio, domínio da marca, SEO local, promoções e fidelização.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"O link atual é de uma plataforma terceirizada.","fonteContato":"https://www.instagram.com/p/C_ELfM7PZaG/","fontePresenca":"https://www.instagram.com/nachapapaoealho/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Na Chapa Pão e Alho pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês já usam uma plataforma de pedidos, mas um site próprio poderia fortalecer a marca e centralizar cardápio, promoções e fidelização. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Na Chapa Pão e Alho, sem compromisso."},{"id":17,"empresa":"Taz Burgers & Pizzaria","cidade":"Queimados","segmento":"Restaurante e pizzaria","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 99737-2209","whatsapp":"https://wa.me/5521997372209","instagram":"https://www.instagram.com/tazburgers/","site":"https://tazburgersepizzaria.com.br/","temSite":"Sim","email":null,"endereco":"Rua Coringa, 102, Vila Dona Branca, Queimados/RJ","situacao":"Já possui endereço de site divulgado.","oportunidade":"Revisão do site, cardápio, reservas, SEO local, velocidade e campanhas.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar funcionamento do site e experiência mobile antes da abordagem.","fonteContato":"https://www.instagram.com/reel/DXKwbdwCVDT/","fontePresenca":"https://www.instagram.com/tazburgers/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Taz Burgers & Pizzaria e dei uma olhada no trabalho de vocês.\n\nPelo que observei, vocês já possuem site e trabalham com rodízio, pizzas e eventos, então uma melhoria de navegação e reservas pode gerar mais conversões. Trabalho também com melhorias em sites existentes, como experiência no celular, velocidade, SEO, organização das páginas e conversão para o WhatsApp.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Taz Burgers & Pizzaria, sem compromisso."},{"id":18,"empresa":"A Casa do Hambúrguer Queimados","cidade":"Queimados","segmento":"Hamburgueria","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 99974-0899","whatsapp":"https://wa.me/5521999740899","instagram":"https://www.instagram.com/acasadohamburguerqueimados/","site":null,"temSite":"Não","email":null,"endereco":"Queimados/RJ","situacao":"Atendimento via Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Cardápio digital próprio, pedidos, combos, promoções e presença no Google.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Negócio ativo desde 2013 segundo o perfil.","fonteContato":"https://www.instagram.com/acasadohamburguerqueimados/","fontePresenca":"https://www.instagram.com/acasadohamburguerqueimados/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da A Casa do Hambúrguer Queimados e achei a proposta de vocês bem interessante.\n\nPelo que observei, a hamburgueria já tem história na região, e um site próprio poderia organizar cardápio, combos e pedidos sem depender apenas das redes. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a A Casa do Hambúrguer Queimados, sem compromisso."},{"id":19,"empresa":"Edinho do Caranguejo","cidade":"Duque de Caxias","segmento":"Bar e restaurante","prioridade":"Alta","tipoContato":"Telefone e Instagram","contato":"(21) 2772-1319","whatsapp":null,"instagram":"https://www.instagram.com/edinhodocaranguejo/","site":null,"temSite":"Não","email":null,"endereco":"Rua Humberto de Campos, 143, Centro, Duque de Caxias/RJ","situacao":"Negócio tradicional; site próprio não localizado.","oportunidade":"Site contando a história, cardápio, localização, eventos, reservas e SEO local.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"O telefone encontrado não foi identificado publicamente como WhatsApp.","fonteContato":"https://comidadibuteco.com.br/buteco/edinho-do-caranguejo/","fontePresenca":"https://www.instagram.com/edinhodocaranguejo/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Edinho do Caranguejo pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, o restaurante possui uma história tradicional que poderia ser muito bem explorada em um site com cardápio, localização e reservas. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Edinho do Caranguejo, sem compromisso."},{"id":20,"empresa":"Petisqueiros Pub","cidade":"Duque de Caxias","segmento":"Bar e eventos","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 97512-9360","whatsapp":"https://wa.me/5521975129360","instagram":"https://www.instagram.com/petisqueirospub/","site":null,"temSite":"Não","email":null,"endereco":"Rua Professor José de Souza Herdy, 1189, 25 de Agosto, Duque de Caxias/RJ","situacao":"Agenda e reservas concentradas nas redes e no WhatsApp.","oportunidade":"Site com agenda, reservas, cardápio, eventos e páginas para confraternizações.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Excelente caso para mostrar um protótipo de agenda e reservas.","fonteContato":"https://www.instagram.com/petisqueirospub/","fontePresenca":"https://www.instagram.com/petisqueirospub/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Petisqueiros Pub e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a agenda de música, karaokê e eventos merece um espaço próprio onde o público possa consultar datas e fazer reservas. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Petisqueiros Pub, sem compromisso."},{"id":21,"empresa":"Centro de Estética Camila Guerra","cidade":"Nova Iguaçu","segmento":"Estética avançada","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 97881-5366","whatsapp":"https://wa.me/5521978815366","instagram":"https://www.instagram.com/esteticacamilaguerra/","site":null,"temSite":"Não","email":null,"endereco":"Rua Prof. Venina Corrêa Torres, 230, sala 907, Centro, Nova Iguaçu/RJ","situacao":"Clínica consolidada, com audiência forte nas redes; site próprio não localizado na busca.","oportunidade":"Site premium com procedimentos, equipe, resultados autorizados, SEO local e avaliação pelo WhatsApp.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Negócio com alto volume de audiência. Personalizar a abordagem com foco em conversão e autoridade.","fonteContato":"https://www.instagram.com/esteticacamilaguerra/","fontePresenca":"https://www.instagram.com/esteticacamilaguerra/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Centro de Estética Camila Guerra e achei a proposta de vocês bem interessante.\n\nPelo que observei, o perfil possui bastante conteúdo e autoridade, e um site premium poderia transformar essa audiência em mais avaliações e agendamentos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Centro de Estética Camila Guerra, sem compromisso."},{"id":22,"empresa":"Harmonizze Clínica Estética","cidade":"Nova Iguaçu","segmento":"Estética","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97103-0708","whatsapp":"https://wa.me/5521971030708","instagram":"https://www.instagram.com/joicealbuquerque.harmonizze/","site":null,"temSite":"Não","email":null,"endereco":"Av. Dr. Mário Guimarães, 318, Centro, Nova Iguaçu/RJ","situacao":"Presença ativa no Instagram; site próprio não localizado.","oportunidade":"Site institucional com tratamentos personalizados, prova social, dúvidas frequentes e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Boa candidata para uma landing page elegante antes de uma proposta completa.","fonteContato":"https://www.instagram.com/reel/DOEFiOXDh9Y/","fontePresenca":"https://www.instagram.com/joicealbuquerque.harmonizze/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Harmonizze Clínica Estética pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, o atendimento personalizado e os procedimentos oferecidos podem ser apresentados de forma mais clara em uma página profissional. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Harmonizze Clínica Estética, sem compromisso."},{"id":23,"empresa":"Espaço Facial Nova Iguaçu","cidade":"Nova Iguaçu","segmento":"Estética avançada","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 98646-4043","whatsapp":"https://wa.me/5521986464043","instagram":"https://www.instagram.com/espacofacial_novaiguacu/","site":null,"temSite":"Não","email":null,"endereco":"Av. Gov. Amaral Peixoto, 427, loja 124, Galeria Veplan, Centro, Nova Iguaçu/RJ","situacao":"Unidade com comunicação concentrada no Instagram; página própria da unidade não localizada.","oportunidade":"Landing page local com procedimentos, localização, avaliações e campanhas para captação.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Pode haver decisões de marketing centralizadas pela marca; abordar a unidade com solução local.","fonteContato":"https://www.instagram.com/espacofacial_novaiguacu/","fontePresenca":"https://www.instagram.com/espacofacial_novaiguacu/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Espaço Facial Nova Iguaçu e dei uma olhada no trabalho de vocês.\n\nPelo que observei, uma página voltada especificamente para a unidade poderia melhorar a busca local e facilitar o agendamento dos procedimentos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Espaço Facial Nova Iguaçu, sem compromisso."},{"id":24,"empresa":"Nosso Canto Churrasco","cidade":"São João de Meriti","segmento":"Restaurante","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 98286-9700","whatsapp":"https://wa.me/5521982869700","instagram":"https://www.instagram.com/nossocanto_churrasco/","site":null,"temSite":"Não","email":null,"endereco":"Av. Presidente Lincoln, 244, Jardim Meriti, São João de Meriti/RJ","situacao":"Restaurante com divulgação ativa; site próprio e cardápio oficial não localizados.","oportunidade":"Site com cardápio, reservas, agenda musical, eventos e presença forte no Google.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Usar a experiência gastronômica e os eventos como gancho visual.","fonteContato":"https://www.instagram.com/nossocanto_churrasco/","fontePresenca":"https://www.instagram.com/nossocanto_churrasco/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Nosso Canto Churrasco e achei a proposta de vocês bem interessante.\n\nPelo que observei, o ambiente, o churrasco e a programação do restaurante combinam com um site que reúna cardápio, reservas e agenda musical. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Nosso Canto Churrasco, sem compromisso."},{"id":25,"empresa":"Restaurante Castelo da Praça","cidade":"São João de Meriti","segmento":"Restaurante e pizzaria","prioridade":"Alta","tipoContato":"WhatsApp e telefone","contato":"(21) 99933-4048 / (21) 3735-6624","whatsapp":"https://wa.me/5521999334048","instagram":"https://www.instagram.com/restaurantecastelo/","site":null,"temSite":"Não","email":null,"endereco":"Av. Carioca, 35, Vila Rosali, São João de Meriti/RJ","situacao":"Reservas e promoções concentradas nas redes; site próprio não localizado.","oportunidade":"Site com rodízio, buffet, reservas, aniversários, eventos e cardápio atualizado.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar qual número é o WhatsApp principal antes de enviar a proposta.","fonteContato":"https://www.instagram.com/reel/DV08c_6iGUa/","fontePresenca":"https://www.instagram.com/restaurantecastelo/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Restaurante Castelo da Praça pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês trabalham com rodízio, buffet e comemorações, e um site poderia deixar reservas e eventos muito mais organizados. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Restaurante Castelo da Praça, sem compromisso."},{"id":26,"empresa":"Mais Peixe Restaurante","cidade":"São João de Meriti","segmento":"Restaurante","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 99906-8537","whatsapp":"https://wa.me/5521999068537","instagram":"https://www.instagram.com/_maispeixe/","site":null,"temSite":"Não","email":null,"endereco":"Rua Rio de Janeiro, 55, Vilar dos Teles, São João de Meriti/RJ","situacao":"Pedidos e informações concentrados no Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Cardápio digital próprio, pedidos, reservas, localização e SEO para culinária de frutos do mar.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Há publicações com endereços diferentes; confirmar a unidade/endereço antes da abordagem.","fonteContato":"https://www.instagram.com/reel/DVBY6gzgFok/","fontePresenca":"https://www.instagram.com/_maispeixe/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Mais Peixe Restaurante e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a especialidade em peixes e frutos do mar pode ganhar bastante destaque em um cardápio digital próprio com localização e reservas. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Mais Peixe Restaurante, sem compromisso."},{"id":27,"empresa":"Salão Martins Beauty","cidade":"Belford Roxo","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97695-4571","whatsapp":"https://wa.me/5521976954571","instagram":"https://www.instagram.com/salaomartinsbeauty/","site":null,"temSite":"Não","email":null,"endereco":"Praça Mário Guedes, 374, loja D, Parque São Vicente, Belford Roxo/RJ","situacao":"Atua desde 2014 e depende principalmente das redes para divulgação e agendamento.","oportunidade":"Site com serviços, equipe, portfólio, agenda e páginas para noivas e tratamentos.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Bom argumento de autoridade: transformar os anos de mercado em prova social.","fonteContato":"https://www.instagram.com/salaomartinsbeauty/","fontePresenca":"https://www.instagram.com/salaomartinsbeauty/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Salão Martins Beauty e achei a proposta de vocês bem interessante.\n\nPelo que observei, a trajetória do salão desde 2014 pode ser usada como prova de confiança em um site com serviços, equipe e agendamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Salão Martins Beauty, sem compromisso."},{"id":28,"empresa":"Studio Lu Baldez","cidade":"Belford Roxo","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 96938-2608","whatsapp":"https://wa.me/5521969382608","instagram":"https://www.instagram.com/studiolubaldez/","site":null,"temSite":"Não","email":null,"endereco":"Belford Roxo/RJ","situacao":"Marca ativa e especializada em lisos e loiros; site próprio não localizado.","oportunidade":"Site visual com serviços, transformações, manutenção capilar, agenda e captura de leads.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Oferecer um protótipo focado em antes/depois e reserva de horários.","fonteContato":"https://www.instagram.com/studiolubaldez/","fontePresenca":"https://www.instagram.com/studiolubaldez/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Studio Lu Baldez pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, o foco em lisos e loiros rende um portfólio visual muito forte, perfeito para um site com transformações e reserva de horários. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Studio Lu Baldez, sem compromisso."},{"id":29,"empresa":"Studio B Carvalho","cidade":"Belford Roxo","segmento":"Salão de beleza","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 97131-6324","whatsapp":"https://wa.me/5521971316324","instagram":"https://www.instagram.com/studiobcarvalho/","site":null,"temSite":"Não","email":null,"endereco":"Av. José Mariano Passos, 1455, Belford Roxo/RJ","situacao":"Presença em Instagram e diretório de terceiros; site próprio não localizado.","oportunidade":"Site enxuto com serviços, galeria, preços iniciais, localização e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Diretório de terceiros não substitui um domínio próprio para Google e anúncios.","fonteContato":"https://glamspot.com.br/salao/studiobcarvalho","fontePresenca":"https://www.instagram.com/studiobcarvalho/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Studio B Carvalho e dei uma olhada no trabalho de vocês.\n\nPelo que observei, vocês já aparecem em plataformas de terceiros, mas um endereço próprio ajudaria a fortalecer a marca e a presença no Google. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Studio B Carvalho, sem compromisso."},{"id":30,"empresa":"Rafa Rodriguez Hair Design","cidade":"Mesquita","segmento":"Salão de beleza","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 99347-9993","whatsapp":"https://wa.me/5521993479993","instagram":"https://www.instagram.com/rafa_rodriguezhd/","site":null,"temSite":"Não","email":null,"endereco":"Praça Elizabeth Paixão, 54B, Mesquita/RJ","situacao":"Agendamentos concentrados no Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Landing page com portfólio, serviços, depoimentos, agenda e localização.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Lead adequado para uma oferta inicial mais acessível e rápida.","fonteContato":"https://www.instagram.com/rafa_rodriguezhd/","fontePresenca":"https://www.instagram.com/rafa_rodriguezhd/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Rafa Rodriguez Hair Design e achei a proposta de vocês bem interessante.\n\nPelo que observei, o trabalho visual do salão poderia ser apresentado em um portfólio próprio, com serviços e agendamento pelo WhatsApp. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Rafa Rodriguez Hair Design, sem compromisso."},{"id":31,"empresa":"Salão Lene's","cidade":"Mesquita","segmento":"Salão de beleza","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 96553-7770","whatsapp":"https://wa.me/5521965537770","instagram":"https://www.instagram.com/salaolenes/","site":null,"temSite":"Não","email":null,"endereco":"Mesquita/RJ","situacao":"Salão tradicional com atendimento divulgado pelas redes; site próprio não localizado.","oportunidade":"Página com serviços, especialistas, portfólio e botão de agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar endereço completo pelo WhatsApp ou perfil antes de personalizar a abordagem.","fonteContato":"https://www.instagram.com/salaolenes/","fontePresenca":"https://www.instagram.com/salaolenes/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Salão Lene's pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, um site simples poderia reunir os serviços, profissionais, fotos de trabalhos e o botão de agendamento em um só lugar. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Salão Lene's, sem compromisso."},{"id":32,"empresa":"Nosso Espaço Salão de Festa","cidade":"Mesquita","segmento":"Casa de festas","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 96684-0974","whatsapp":"https://wa.me/5521966840974","instagram":"https://www.instagram.com/nossoespaco_mesquita/","site":null,"temSite":"Não","email":null,"endereco":"Mesquita/RJ","situacao":"Divulgação e reservas concentradas no Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Site com galeria, pacotes, capacidade, estrutura, calendário, orçamento e visitas.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Excelente para um protótipo visual. Eventos têm ticket maior e decisão muito baseada em fotos.","fonteContato":"https://www.instagram.com/nossoespaco_mesquita/","fontePresenca":"https://www.instagram.com/nossoespaco_mesquita/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Nosso Espaço Salão de Festa e dei uma olhada no trabalho de vocês.\n\nPelo que observei, um espaço de festas é escolhido principalmente pelas fotos e pela estrutura, então uma galeria própria pode ajudar muito nos orçamentos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Nosso Espaço Salão de Festa, sem compromisso."},{"id":33,"empresa":"Dr. Saúde Queimados","cidade":"Queimados","segmento":"Clínica médica","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 97529-4810","whatsapp":"https://wa.me/5521975294810","instagram":"https://www.instagram.com/drsaudequeimados/","site":null,"temSite":"Não","email":null,"endereco":"Rua Eloy Teixeira, 165, Centro Comercial de Queimados, Queimados/RJ","situacao":"Unidade divulga especialidades e associação pelas redes; site local não localizado.","oportunidade":"Landing page da unidade com especialidades, horários, associação, exames e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Pode haver diretrizes de franquia; oferecer página local e SEO, não reformulação da marca.","fonteContato":"https://www.instagram.com/reel/C89722qAdew/","fontePresenca":"https://www.instagram.com/drsaudequeimados/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Dr. Saúde Queimados e achei a proposta de vocês bem interessante.\n\nPelo que observei, uma página voltada para a unidade poderia organizar especialidades, horários, exames e formas de atendimento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Dr. Saúde Queimados, sem compromisso."},{"id":34,"empresa":"Cordial Saúde","cidade":"Queimados","segmento":"Clínica médica","prioridade":"Média","tipoContato":"WhatsApp e site","contato":"(21) 98284-8187 / (21) 2779-8232","whatsapp":"https://wa.me/5521982848187","instagram":"https://www.instagram.com/cordialsaudeclinicamedica/","site":"https://cordialsaude.com.br/","temSite":"Sim","email":null,"endereco":"Estrada de Caramujos, 1843, Belmonte, Queimados/RJ","situacao":"Já possui site e Linktree, além de atendimento por WhatsApp.","oportunidade":"Auditoria de conversão, velocidade, SEO local, páginas de especialidades e tracking.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Abordar apenas após analisar problemas concretos do site atual.","fonteContato":"https://linktr.ee/cordialsaude","fontePresenca":"https://www.instagram.com/cordialsaudeclinicamedica/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Cordial Saúde pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, vocês já possuem site, e posso contribuir com uma análise de velocidade, conversão, SEO local e páginas de especialidades. Trabalho também com melhorias em sites existentes, como experiência no celular, velocidade, SEO, organização das páginas e conversão para o WhatsApp.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Cordial Saúde, sem compromisso."},{"id":35,"empresa":"Clínica Médica Pacaembu","cidade":"Queimados","segmento":"Clínica médica","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97937-7968","whatsapp":"https://wa.me/5521979377968","instagram":"https://www.instagram.com/clinicamedicapacaembu/","site":null,"temSite":"Não","email":null,"endereco":"Av. Maracanã, 687, Queimados/RJ","situacao":"Clínica popular com várias especialidades; site próprio não localizado.","oportunidade":"Site com agenda semanal, especialidades, preços iniciais, exames e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"A grade de médicos e especialidades pode virar um diferencial claro no protótipo.","fonteContato":"https://www.instagram.com/reel/DLm1DE7Al1E/","fontePresenca":"https://www.instagram.com/clinicamedicapacaembu/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Clínica Médica Pacaembu e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a variedade de especialidades e a agenda dos profissionais poderiam ficar muito mais fáceis de consultar em um site próprio. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Clínica Médica Pacaembu, sem compromisso."},{"id":36,"empresa":"Total Saúde Queimados","cidade":"Queimados","segmento":"Clínica médica","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(21) 97222-9775","whatsapp":"https://wa.me/5521972229775","instagram":"https://www.instagram.com/totaalsaudee/","site":null,"temSite":"Não","email":null,"endereco":"Rua Marcelo Augusto Carneiro, 1337, Centro, Queimados/RJ","situacao":"Clínica divulga exames e especialidades nas redes; site próprio não localizado.","oportunidade":"Site com especialidades, exames, agenda, convênios, localização e captação de pacientes.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Confirmar o endereço e o número na bio atual, pois algumas publicações citam contatos de parceiros.","fonteContato":"https://www.instagram.com/totaalsaudee/","fontePresenca":"https://www.instagram.com/totaalsaudee/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Total Saúde Queimados e achei a proposta de vocês bem interessante.\n\nPelo que observei, um site poderia organizar exames, especialidades, convênios e horários, reduzindo dúvidas antes do contato pelo WhatsApp. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Total Saúde Queimados, sem compromisso."},{"id":37,"empresa":"Espaço Facial Caxias","cidade":"Duque de Caxias","segmento":"Estética avançada","prioridade":"Média","tipoContato":"WhatsApp","contato":"(21) 99816-0514","whatsapp":"https://wa.me/5521998160514","instagram":"https://www.instagram.com/espacofacialcaxias/","site":null,"temSite":"Não","email":null,"endereco":"Caxias Shopping, Duque de Caxias/RJ","situacao":"Unidade possui presença ativa no Instagram; página própria local não localizada.","oportunidade":"Landing page local com procedimentos, avaliações, localização e campanhas de aquisição.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"A marca possui mais de uma unidade em Caxias; confirmar qual contato será abordado.","fonteContato":"https://www.instagram.com/espacofacialcaxias/","fontePresenca":"https://www.instagram.com/espacofacialcaxias/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Espaço Facial Caxias pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, uma página específica para a unidade ajudaria a destacar os procedimentos, avaliações e localização para quem busca atendimento em Caxias. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Espaço Facial Caxias, sem compromisso."},{"id":38,"empresa":"Salão da Lu","cidade":"Centro do Rio de Janeiro","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp e telefone","contato":"(21) 98645-3380 / (21) 2507-4805","whatsapp":"https://wa.me/5521986453380","instagram":"https://www.instagram.com/salaodalurio/","site":null,"temSite":"Não","email":null,"endereco":"Rua Buenos Aires, 271, sala 201, Centro, Rio de Janeiro/RJ","situacao":"Salão ativo no Centro, com agendamentos por redes e telefone; site próprio não localizado.","oportunidade":"Site com serviços, profissionais, portfólio, agenda e SEO para quem trabalha no Centro.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Gancho forte: captar clientes que pesquisam salão perto do trabalho.","fonteContato":"https://www.instagram.com/salaodalurio/","fontePresenca":"https://www.instagram.com/salaodalurio/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Salão da Lu e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a localização no Centro do Rio cria uma boa oportunidade para captar pessoas que procuram salão perto do trabalho. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Salão da Lu, sem compromisso."},{"id":39,"empresa":"Suyane Rio","cidade":"Centro do Rio de Janeiro","segmento":"Moda feminina","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 97672-6069","whatsapp":"https://wa.me/5521976726069","instagram":"https://www.instagram.com/suyaneloja/","site":null,"temSite":"Não","email":null,"endereco":"Rua da Alfândega, 341, Centro, Rio de Janeiro/RJ","situacao":"Loja envia para todo o Brasil, mas a venda pública encontrada está concentrada em Instagram e WhatsApp.","oportunidade":"E-commerce com catálogo, estoque, pagamento, frete nacional e recuperação de carrinho.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Lead especialmente forte: já existe demanda nacional e logística de envio.","fonteContato":"https://www.instagram.com/suyaneloja/p/DUgExlHgIxK/","fontePresenca":"https://www.instagram.com/suyaneloja/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Suyane Rio e achei a proposta de vocês bem interessante.\n\nPelo que observei, vocês já enviam para todo o Brasil, então uma loja virtual própria pode organizar estoque, pagamentos, frete e pedidos nacionais. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nAlém do meu portfólio, este é um e-commerce de moda feminina que desenvolvi e pode servir como referência:\nhttps://liaeluan.com.br/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Suyane Rio, sem compromisso."},{"id":40,"empresa":"Atacado Saara","cidade":"Centro do Rio de Janeiro","segmento":"Atacado e variedades","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(21) 99588-0767","whatsapp":"https://wa.me/5521995880767","instagram":"https://www.instagram.com/atacadosaara/","site":null,"temSite":"Não","email":null,"endereco":"Av. Tomé de Sousa, 113B, Centro, Rio de Janeiro/RJ","situacao":"Atacado com entregas nacionais e grupo de WhatsApp; site próprio não localizado.","oportunidade":"Catálogo B2B com pedido mínimo, kits, tabela para revendedores, pagamento e frete.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Publicações também citam o nº 124. Confirmar a loja/endereço antes da abordagem.","fonteContato":"https://www.instagram.com/reel/DXxLuq0x73v/","fontePresenca":"https://www.instagram.com/atacadosaara/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Atacado Saara pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, o atendimento a revendedores e as entregas nacionais combinam com um catálogo B2B, kits e condições de pedido bem organizadas. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Atacado Saara, sem compromisso."},{"id":41,"empresa":"Clínica Venusta","cidade":"São Paulo","segmento":"Estética avançada","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 94200-7422","whatsapp":"https://wa.me/5511942007422","instagram":"https://www.instagram.com/reel/DIRdVncuCEJ/","site":null,"temSite":"Não","email":null,"endereco":"Rua Baronesa de Bela Vista, 411, salas 307/308, Vila Congonhas, São Paulo/SP","situacao":"Agenda e aquisição concentradas em Instagram e WhatsApp; site próprio não localizado na busca direcionada.","oportunidade":"Site de autoridade com procedimentos, profissionais, casos autorizados, FAQ, SEO local e avaliação.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Clínica independente e serviço de ticket alto. Boa chance de valorizar um site focado em captação.","fonteContato":"https://www.instagram.com/reel/DIRdVncuCEJ/","fontePresenca":"https://doutor.net.br/sobre/clinica-venusta-sao-paulo-sp-21978276","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Clínica Venusta e dei uma olhada no trabalho de vocês.\n\nPelo que observei, os procedimentos de estética avançada possuem um ticket maior e dependem de confiança, algo que um site profissional ajuda a construir. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Clínica Venusta, sem compromisso."},{"id":42,"empresa":"FAMA Studio e Beleza","cidade":"São Paulo","segmento":"Salão de beleza","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 94169-4865 / 3641-6000 / 3835-6907","whatsapp":"https://wa.me/5511941694865","instagram":"https://www.instagram.com/famastudioebeleza/","site":null,"temSite":"Não","email":null,"endereco":"Av. Paulista, 1636, Bela Vista, São Paulo/SP","situacao":"Salão com atendimento e agenda divulgados pelas redes; site próprio não localizado.","oportunidade":"Site com profissionais, serviços, portfólio, agendamento, noivas e SEO para a região da Paulista.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Localização forte e agenda por WhatsApp. Proposta deve destacar captação de quem trabalha ou circula na Paulista.","fonteContato":"https://www.instagram.com/famastudioebeleza/","fontePresenca":"https://www.instagram.com/famastudioebeleza/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da FAMA Studio e Beleza e achei a proposta de vocês bem interessante.\n\nPelo que observei, a localização na Avenida Paulista e a variedade de serviços podem atrair muito mais buscas locais com uma presença própria bem estruturada. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a FAMA Studio e Beleza, sem compromisso."},{"id":43,"empresa":"Feeling Beleza","cidade":"São Paulo","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 99471-1858","whatsapp":"https://wa.me/5511994711858","instagram":"https://www.instagram.com/feelingbeleza/","site":null,"temSite":"Não","email":null,"endereco":"Av. Dr. Eduardo Cotching, 678, Vila Formosa, São Paulo/SP","situacao":"Presença forte nas redes e agendamento direto; site próprio não localizado.","oportunidade":"Site visual com serviços, equipe, transformações, agenda, pacotes e SEO local.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Negócio local estabelecido. Confirmar o WhatsApp atual na bio antes da primeira mensagem.","fonteContato":"https://www.instagram.com/reel/DE-kO-QpCjb/","fontePresenca":"https://www.instagram.com/feelingbeleza/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Feeling Beleza pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, as transformações e serviços do salão renderiam um ótimo portfólio, além de uma página para facilitar agendamentos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Feeling Beleza, sem compromisso."},{"id":44,"empresa":"Terra Beleza","cidade":"São Paulo","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp e telefone","contato":"(11) 3045-1713","whatsapp":"https://wa.me/551130451713","instagram":"https://www.instagram.com/terrabeleza/","site":null,"temSite":"Não","email":null,"endereco":"Rua Clodomiro Amazonas, 1037, Vila Olímpia, São Paulo/SP","situacao":"Atendimento e reservas divulgados por Instagram e diretório de terceiros; site próprio não localizado.","oportunidade":"Site premium com serviços, equipe, reservas, noivas, localização e campanhas de busca.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Está em região de alto valor. Confirmar se o telefone recebe WhatsApp antes de abordar.","fonteContato":"https://www.instagram.com/terrabeleza/","fontePresenca":"https://www.fresha.com/pt/lvp/terra-beleza-rua-clodomiro-amazonas-xZPPK8","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Terra Beleza e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a localização na Vila Olímpia e o perfil premium do salão combinam com um site elegante, focado em reservas e serviços. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Terra Beleza, sem compromisso."},{"id":45,"empresa":"Yamada Cabeleireiro","cidade":"São Paulo","segmento":"Salão de beleza","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 93272-1778 / (11) 3868-1778","whatsapp":"https://wa.me/5511932721778","instagram":"https://www.instagram.com/yamadacabeleireiro/","site":null,"temSite":"Não","email":null,"endereco":"Rua Turiassu, 367 E, Perdizes, São Paulo/SP","situacao":"Salão tradicional com comunicação ativa nas redes; site próprio não apareceu na busca direcionada.","oportunidade":"Site contando a tradição da marca, unidades, profissionais, serviços, reservas e SEO local.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Abordar com respeito à tradição e proposta de modernização, não como negócio iniciante.","fonteContato":"https://www.instagram.com/p/DTiDDEzjbx5/","fontePresenca":"https://www.instagram.com/yamadacabeleireiro/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Yamada Cabeleireiro e achei a proposta de vocês bem interessante.\n\nPelo que observei, a tradição do salão pode ser valorizada em um site moderno que reúna história, unidades, profissionais e agendamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Yamada Cabeleireiro, sem compromisso."},{"id":46,"empresa":"Espaço Valladares Festas","cidade":"São Paulo","segmento":"Espaço de eventos","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 97067-4146","whatsapp":"https://wa.me/5511970674146","instagram":"https://www.instagram.com/espacovalladares/","site":null,"temSite":"Não","email":null,"endereco":"Av. João Paulo I, 1515, Freguesia do Ó, São Paulo/SP","situacao":"Orçamentos e reservas concentrados no Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Site com galeria, pacotes, capacidade, estrutura, datas, visitas e formulário de orçamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Lead muito visual e com ticket alto. Um protótipo de galeria e orçamento pode abrir a conversa.","fonteContato":"https://www.instagram.com/reel/DCHifHZP-ri/","fontePresenca":"https://www.instagram.com/espacovalladares/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Espaço Valladares Festas pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, as fotos, pacotes, capacidade e estrutura do espaço poderiam ser organizados em uma página pensada para gerar pedidos de orçamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Espaço Valladares Festas, sem compromisso."},{"id":47,"empresa":"Casa de Festas com Piscina Cangaíba","cidade":"São Paulo","segmento":"Espaço de eventos","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 94713-6705","whatsapp":"https://wa.me/5511947136705","instagram":"https://www.instagram.com/casadefestascompiscina/","site":null,"temSite":"Não","email":null,"endereco":"Cangaíba, Zona Leste, São Paulo/SP","situacao":"Reservas e apresentação do espaço dependem das redes; site próprio não localizado.","oportunidade":"Site com fotos, estrutura, regras, pacotes, disponibilidade, orçamento e localização.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Negócio independente e orientado a orçamento. Ótimo candidato para landing page de conversão.","fonteContato":"https://www.instagram.com/reel/DWsNyrLkecd/","fontePresenca":"https://www.instagram.com/casadefestascompiscina/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Casa de Festas com Piscina Cangaíba e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a piscina e a estrutura do espaço são diferenciais muito visuais, que podem ser apresentados melhor em uma galeria própria. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Casa de Festas com Piscina Cangaíba, sem compromisso."},{"id":48,"empresa":"Mansão Sales Eventos","cidade":"São Paulo","segmento":"Espaço de eventos","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 98794-3708","whatsapp":"https://wa.me/5511987943708","instagram":"https://www.instagram.com/mansao_sales_eventos/","site":null,"temSite":"Não","email":null,"endereco":"Parque São Domingos, São Paulo/SP","situacao":"Negócio promove datas e estrutura principalmente no Instagram; site próprio não localizado.","oportunidade":"Site com unidades, piscina, pacotes, fotos, calendário, regras e orçamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Número apareceu em divulgação pública externa. Confirmar na bio antes do primeiro contato.","fonteContato":"https://www.facebook.com/groups/1854494768130192/posts/4327278217518489/","fontePresenca":"https://www.instagram.com/mansao_sales_eventos/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Mansão Sales Eventos e achei a proposta de vocês bem interessante.\n\nPelo que observei, vocês trabalham com diferentes espaços e datas para eventos, e um site ajudaria a organizar fotos, pacotes e disponibilidade. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Mansão Sales Eventos, sem compromisso."},{"id":49,"empresa":"Mega Recanto","cidade":"São Paulo","segmento":"Espaço de eventos","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 94088-1715","whatsapp":"https://wa.me/5511940881715","instagram":"https://www.instagram.com/megarecanto/","site":null,"temSite":"Não","email":null,"endereco":"Vila Carmosina, Itaquera, São Paulo/SP","situacao":"Apresenta vários ambientes e recebe visitas pelo WhatsApp; site próprio não localizado.","oportunidade":"Site com ambientes separados, capacidade, galeria, visitas, calendário e orçamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"A variedade de espaços cria conteúdo suficiente para um site robusto e aumenta o valor percebido.","fonteContato":"https://www.instagram.com/reel/DHGlR0-MVeb/","fontePresenca":"https://www.instagram.com/megarecanto/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a Mega Recanto pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, a variedade de ambientes merece páginas e galerias separadas, facilitando a escolha e o pedido de orçamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a Mega Recanto, sem compromisso."},{"id":50,"empresa":"Aline Honorato Studio Pilates","cidade":"São Paulo","segmento":"Pilates e fisioterapia","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 96441-5354","whatsapp":"https://wa.me/5511964415354","instagram":"https://www.instagram.com/reel/DaXp3wROfTK/","site":null,"temSite":"Não","email":null,"endereco":"São Paulo/SP","situacao":"Agendamento e informações concentrados no WhatsApp e em publicações sociais; site próprio não localizado.","oportunidade":"Site com modalidades, profissionais, planos, aula experimental, convênios e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Serviço recorrente e local. Um site simples com aula experimental pode gerar retorno direto.","fonteContato":"https://www.instagram.com/reel/DaXp3wROfTK/","fontePresenca":"https://www.instagram.com/reel/DaXp3wROfTK/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Aline Honorato Studio Pilates e dei uma olhada no trabalho de vocês.\n\nPelo que observei, uma página com modalidades, profissionais, planos e aula experimental pode transformar buscas locais em novos alunos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Aline Honorato Studio Pilates, sem compromisso."},{"id":51,"empresa":"Zoid Studio","cidade":"São Paulo","segmento":"Estúdio fotográfico","prioridade":"Muito alta","tipoContato":"WhatsApp","contato":"(11) 99559-0074","whatsapp":"https://wa.me/5511995590074","instagram":"https://www.instagram.com/zoidestudio/","site":null,"temSite":"Não","email":null,"endereco":"Rua Martins Fontes, 230, Centro, São Paulo/SP","situacao":"Locação e apresentação do estúdio dependem das redes; site próprio não localizado.","oportunidade":"Site com cenários, equipamentos, valores iniciais, disponibilidade, regras e reservas.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Lead extremamente visual e orientado a reserva. Um protótipo pode demonstrar valor em poucos segundos.","fonteContato":"https://www.instagram.com/p/C2rvfQKOQJ0/","fontePresenca":"https://www.instagram.com/zoidestudio/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Zoid Studio e achei a proposta de vocês bem interessante.\n\nPelo que observei, os cenários, equipamentos e opções de locação precisam de uma apresentação visual clara, com informações e reserva em um só lugar. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Zoid Studio, sem compromisso."},{"id":52,"empresa":"Bruna Silva Fotografia","cidade":"São Paulo","segmento":"Fotografia","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 91201-1990","whatsapp":"https://wa.me/5511912011990","instagram":"https://www.instagram.com/reel/DQr_sFzgPKv/","site":null,"temSite":"Não","email":null,"endereco":"São Paulo/SP","situacao":"Portfólio e agendamento divulgados pelas redes; site próprio não localizado.","oportunidade":"Site-portfólio com tipos de ensaio, pacotes, depoimentos, agenda e orçamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Fotógrafos costumam se beneficiar muito de portfólio próprio e páginas para campanhas sazonais.","fonteContato":"https://www.instagram.com/reel/DQr_sFzgPKv/","fontePresenca":"https://www.instagram.com/reel/DQr_sFzgPKv/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci seu trabalho pelas redes e gostei bastante da identidade que você apresenta.\n\nPelo que observei, os ensaios e trabalhos fotográficos ganhariam muito valor em um portfólio próprio com pacotes e pedido de orçamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para você, posso preparar uma ideia inicial para o seu site, sem compromisso."},{"id":53,"empresa":"Clínica Odonto & Cia","cidade":"São Paulo","segmento":"Odontologia","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 94734-1075 / (11) 94750-7919","whatsapp":"https://wa.me/5511947341075","instagram":"https://www.instagram.com/clinica_odontoecia/","site":null,"temSite":"Não","email":null,"endereco":"São Paulo/SP","situacao":"Possui mais de uma unidade e captação pelas redes; site próprio não localizado.","oportunidade":"Site com unidades, tratamentos, equipe, avaliações, urgência, convênios e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Duas unidades aumentam a necessidade de organizar localização, serviços e contatos em domínio próprio.","fonteContato":"https://www.instagram.com/p/DMfu5MtOFGX/","fontePresenca":"https://www.instagram.com/clinica_odontoecia/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Clínica Odonto & Cia e dei uma olhada no trabalho de vocês.\n\nPelo que observei, como vocês possuem mais de uma unidade, um site ajudaria a organizar tratamentos, endereços e contatos de forma profissional. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Clínica Odonto & Cia, sem compromisso."},{"id":54,"empresa":"Mhell Hartt Tattoo","cidade":"São Paulo","segmento":"Tatuagem","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 97663-0932","whatsapp":"https://wa.me/5511976630932","instagram":"https://www.instagram.com/mhell.tattoo/","site":null,"temSite":"Não","email":null,"endereco":"Pinheiros, São Paulo/SP","situacao":"Orçamentos e portfólio concentrados no Instagram e WhatsApp; site próprio não localizado.","oportunidade":"Portfólio por estilo, formulário de orçamento, cuidados, agenda, FAQ e SEO para fine line.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Profissional independente, visual e com orçamento personalizado. Perfil adequado para site enxuto.","fonteContato":"https://www.instagram.com/p/CkwEvvNy7AN/","fontePresenca":"https://www.instagram.com/mhell.tattoo/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci seu trabalho pelas redes e gostei bastante da identidade que você apresenta.\n\nPelo que observei, o estilo fine line e o portfólio autoral podem ser apresentados em uma galeria própria com briefing e orçamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para você, posso preparar uma ideia inicial para o seu site, sem compromisso."},{"id":55,"empresa":"Dani Olivie Tattoo","cidade":"São Paulo","segmento":"Tatuagem","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 97965-5595","whatsapp":"https://wa.me/5511979655595","instagram":"https://www.instagram.com/dani_olivie/","site":null,"temSite":"Não","email":null,"endereco":"Rua Vergueiro, 2999, Vila Mariana, São Paulo/SP","situacao":"Portfólio, orçamento e agenda concentrados nas redes; site próprio não localizado.","oportunidade":"Site autoral com galeria, estilos, processo, formulário de briefing, agenda e cuidados.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Artista independente e com identidade visual própria, cenário ideal para proposta personalizada.","fonteContato":"https://www.instagram.com/reel/DXXYr2FgERB/","fontePresenca":"https://www.instagram.com/dani_olivie/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci seu trabalho pelas redes e gostei bastante da identidade que você apresenta.\n\nPelo que observei, o trabalho autoral merece um site que organize os estilos, o processo, os cuidados e o formulário de orçamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para você, posso preparar uma ideia inicial para o seu site, sem compromisso."},{"id":56,"empresa":"M&S Fisioterapia","cidade":"São Paulo","segmento":"Fisioterapia e pilates","prioridade":"Alta","tipoContato":"WhatsApp","contato":"(11) 99927-2158","whatsapp":"https://wa.me/5511999272158","instagram":"https://www.instagram.com/msfisioterapiasaude/","site":null,"temSite":"Não","email":null,"endereco":"Rua do Suspiro, 33, Cidade Tiradentes, São Paulo/SP","situacao":"Clínica multidisciplinar divulga serviços e agenda pelas redes; site próprio não localizado.","oportunidade":"Site com especialidades, equipe, Pilates, convênios, localização e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Negócio local com vários serviços, o que torna um site organizado especialmente útil.","fonteContato":"https://www.instagram.com/reel/DaENi7hjj9K/","fontePresenca":"https://www.instagram.com/msfisioterapiasaude/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da M&S Fisioterapia e dei uma olhada no trabalho de vocês.\n\nPelo que observei, a variedade de serviços, incluindo fisioterapia e Pilates, pode ficar muito mais clara em uma página com equipe e agendamento. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a M&S Fisioterapia, sem compromisso."},{"id":57,"empresa":"Paris Vegas Beauty","cidade":"São Paulo","segmento":"Salão de beleza","prioridade":"Média","tipoContato":"Instagram","contato":"Contato pelo botão de WhatsApp na bio","whatsapp":null,"instagram":"https://www.instagram.com/parisvegasbeauty/","site":null,"temSite":"Não","email":null,"endereco":"Moema, São Paulo/SP","situacao":"Perfil com audiência relevante e agendamento via botão da bio; número público não apareceu nos resultados.","oportunidade":"Site premium para loiros, serviços, equipe, portfólio, agenda e campanhas locais.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Não inventar telefone. A primeira abordagem deve ser pelo Instagram, pedindo o canal comercial.","fonteContato":"https://www.instagram.com/parisvegasbeauty/","fontePresenca":"https://www.instagram.com/parisvegasbeauty/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Paris Vegas Beauty e achei a proposta de vocês bem interessante.\n\nPelo que observei, o perfil possui uma audiência relevante e um trabalho visual forte com cabelos, que poderia ser valorizado em um site premium. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Paris Vegas Beauty, sem compromisso."},{"id":58,"empresa":"D Clinic Estética","cidade":"São Paulo","segmento":"Estética","prioridade":"Média","tipoContato":"Instagram","contato":"Contato pelo Instagram","whatsapp":null,"instagram":"https://www.instagram.com/dclinicestetica/","site":null,"temSite":"Não","email":null,"endereco":"Parque São Lucas, São Paulo/SP","situacao":"Clínica independente com presença social; telefone público não localizado na busca.","oportunidade":"Landing page com procedimentos, profissional responsável, resultados, dúvidas e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Abordar pelo direct com uma sugestão concreta de página, sem solicitar dados pessoais.","fonteContato":"https://www.instagram.com/dclinicestetica/","fontePresenca":"https://www.instagram.com/dclinicestetica/","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci a D Clinic Estética pelas redes e gostei da forma como vocês apresentam o trabalho.\n\nPelo que observei, uma página própria pode apresentar os procedimentos, a profissional responsável e os resultados de forma mais confiável. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nCaso faça sentido para vocês, posso preparar algumas ideias iniciais pensadas para a D Clinic Estética, sem compromisso."},{"id":59,"empresa":"Thammy's Sant'anna Fisioterapia & Estética","cidade":"São Paulo","segmento":"Fisioterapia e estética","prioridade":"Alta","tipoContato":"Telefone/WhatsApp","contato":"(11) 98770-2269","whatsapp":"https://wa.me/5511987702269","instagram":null,"site":null,"temSite":"Não","email":null,"endereco":"Rua Luiz Vicente Prado Freire, 116, salão 2, Jardim das Rosas, São Paulo/SP","situacao":"Negócio local listado em plataforma de terceiros; site próprio não localizado.","oportunidade":"Site enxuto com fisioterapia, estética, profissionais, agendamento e presença no Google.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Pequeno negócio local, provavelmente acessível a uma oferta de landing page com preço fechado.","fonteContato":"https://www.fresha.com/lp/pt/bt/centros-terap%C3%AAuticos/br-s%C3%A3o-paulo/cidade-tiradentes","fontePresenca":"https://www.fresha.com/lp/pt/bt/centros-terap%C3%AAuticos/br-s%C3%A3o-paulo/cidade-tiradentes","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nEncontrei o perfil da Thammy's Sant'anna Fisioterapia & Estética e dei uma olhada no trabalho de vocês.\n\nPelo que observei, vocês unem fisioterapia e estética, e um site simples ajudaria a explicar os serviços e captar pacientes da região. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nSe acharem interessante, posso mostrar uma sugestão de estrutura para a Thammy's Sant'anna Fisioterapia & Estética, sem compromisso."},{"id":60,"empresa":"Studio Mexa-se Pilates e Fisioterapia","cidade":"São Paulo","segmento":"Pilates e fisioterapia","prioridade":"Alta","tipoContato":"Telefone/WhatsApp","contato":"(11) 94105-1584","whatsapp":"https://wa.me/5511941051584","instagram":null,"site":null,"temSite":"Não","email":null,"endereco":"Rua Iguatama, 300, Guaianases, São Paulo/SP","situacao":"Atendimento aparece em diretório de terceiros; site próprio não localizado.","oportunidade":"Landing page com Pilates, fisioterapia, aula experimental, horários e agendamento.","status":"Novo","ultimoContato":null,"followUp":null,"responsavel":null,"obs":"Serviço recorrente e hiperlocal, bom candidato para site simples com Google e WhatsApp.","fonteContato":"https://www.fresha.com/lp/pt/bt/centros-terap%C3%AAuticos/br-s%C3%A3o-paulo/cidade-tiradentes","fontePresenca":"https://www.fresha.com/lp/pt/bt/centros-terap%C3%AAuticos/br-s%C3%A3o-paulo/cidade-tiradentes","verificadoEm":"2026-07-11","mensagem":"Boa tarde! Tudo bem?\n\nMe chamo Lucas e trabalho com criação e melhoria de sites.\n\nConheci o trabalho da Studio Mexa-se Pilates e Fisioterapia e achei a proposta de vocês bem interessante.\n\nPelo que observei, uma página com Pilates, fisioterapia, horários e aula experimental pode facilitar bastante a entrada de novos alunos. Pensei que um site próprio poderia ajudar a apresentar tudo isso de forma mais organizada e profissional, mantendo o WhatsApp como principal canal de atendimento.\n\nEste é o meu portfólio:\nhttps://www.dev-lss.com/\n\nPosso também enviar uma ideia inicial de como isso poderia funcionar para a Studio Mexa-se Pilates e Fisioterapia, sem compromisso."}];
+
+/* ===== ÍCONES (SVG inline, sem emoji) ===== */
+const ICONS = {
+  chat:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  insta:'<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  note:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+};
+const I = (n,s=15)=>`<svg class="i" style="width:${s}px;height:${s}px" viewBox="0 0 24 24">${ICONS[n]}</svg>`;
+
+/* ===== CONFIG ===== */
+const STORE_KEY = 'crm_leads_lucas_v1';
+const STATUSES = [
+  {id:'Novo',               color:'#64748b', fuDays:null, stage:0},
+  {id:'Contato enviado',    color:'#3b82f6', fuDays:3,    stage:1},
+  {id:'Respondeu',          color:'#2aa8c4', fuDays:1,    stage:2},
+  {id:'Interessado',        color:'#8b5cf6', fuDays:2,    stage:3},
+  {id:'Orçamento enviado',  color:'#d4a017', fuDays:3,    stage:4},
+  {id:'Fechado',            color:'#2eb872', fuDays:null, stage:5},
+  {id:'Orçamento recusado', color:'#e8763a', fuDays:null, stage:4},
+  {id:'Desinteressado',     color:'#d94f4f', fuDays:null, stage:2},
+  {id:'Sem resposta',       color:'#7c8494', fuDays:null, stage:1},
+];
+const CLOSED = ['Fechado','Orçamento recusado','Desinteressado','Sem resposta'];
+const MIGRATE = {'Contato respondeu':'Respondeu','Negociando':'Interessado','Proposta enviada':'Orçamento enviado','Perdido':'Desinteressado'};
+const PRIO_COLORS = {'Muito alta':'#d94f4f','Alta':'#e8763a','Média':'#d4a017','Baixa':'#64748b'};
+const stColor = s => (STATUSES.find(x=>x.id===s)||{color:'#64748b'}).color;
+const brl = v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+
+/* ===== STATE / PERSISTENCE ===== */
+let leads = [];
+const state = {view:'dashboard', search:'', fStatus:'', fPrio:'', fCidade:'', fSeg:'', onlyFu:false, sortKey:'id', sortDir:1};
+
+function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function addDays(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function fmtBR(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function nowStamp(){ const d=new Date(); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+
+function migrate(arr){
+  arr.forEach(l=>{
+    if(MIGRATE[l.status]) l.status=MIGRATE[l.status];
+    if(!STATUSES.some(s=>s.id===l.status)) l.status='Novo';
+    if(l.valor===undefined) l.valor=null;
+    if(l.contato2===undefined){ l.contato2=null; l.whatsapp2=null;
+      if(l.contato&&l.contato.includes('/')){ const parts=l.contato.split('/').map(x=>x.trim()).filter(Boolean);
+        if(parts.length>1){ l.contato=parts[0]; l.contato2=parts[1]; l.whatsapp2=phoneLink(parts[1]); if(!l.whatsapp) l.whatsapp=phoneLink(parts[0]); } } }
+    l.historico=l.historico||[];
+  });
+  return arr;
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ leads = migrate(JSON.parse(raw)); save(); return; }
+  }catch(e){}
+  leads = migrate(SEED.map(l => ({...l, historico: [{t:nowStamp(), txt:'Lead importado da planilha original'}]})));
+  save();
+}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(leads)); }catch(e){ toast('Não foi possível salvar no navegador','err'); } }
+
+/* ===== AUTOMAÇÃO CENTRAL: mudança de status ===== */
+function setStatus(id, newStatus, silent){
+  const l = leads.find(x=>x.id===id); if(!l || l.status===newStatus) return;
+  const old = l.status;
+  l.status = newStatus;
+  l.ultimoContato = today();                    // data atualiza automaticamente
+  const cfg = STATUSES.find(s=>s.id===newStatus);
+  if(cfg && cfg.fuDays!=null){ l.followUp = addDays(today(), cfg.fuDays); } // follow-up sugerido
+  else if(CLOSED.includes(newStatus)){ l.followUp = null; }
+  l.historico.unshift({t:nowStamp(), txt:`Status: ${old||'—'} → ${newStatus}${cfg&&cfg.fuDays!=null?` · follow-up em ${fmtBR(l.followUp)}`:''}`});
+  save();
+  if(!silent){
+    let extra = cfg&&cfg.fuDays!=null ? `, follow-up ${fmtBR(l.followUp)}` : '';
+    if(newStatus==='Orçamento enviado' && !l.valor) extra += '. Informe o valor do orçamento na coluna ou no painel do lead';
+    if(newStatus==='Fechado' && l.valor) extra = ` — ${brl(l.valor)} ganhos`;
+    toast(`<b>${l.empresa}</b> — status alterado para <b style="color:${stColor(newStatus)}">${newStatus}</b>. Último contato registrado hoje${extra}.`);
+  }
+  renderAll(id);
+}
+function setField(id, field, value){
+  const l = leads.find(x=>x.id===id); if(!l) return;
+  if(field==='valor'){ value = parseFloat(value)||null; if(value!==l.valor && value){ l.historico.unshift({t:nowStamp(), txt:`Orçamento definido: ${brl(value)}`}); } }
+  l[field] = value || null;
+  if(field==='followUp' && value){ l.historico.unshift({t:nowStamp(), txt:`Follow-up ajustado para ${fmtBR(value)}`}); }
+  save(); renderAll();
+}
+function phoneLink(txt){ const d=(txt||'').replace(/\D/g,''); if(d.length<10||d.length>13) return null; return 'https://wa.me/'+((d.startsWith('55')&&d.length>=12)? d : '55'+d); }
+function setPhone(id,which,value){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  value=(value||'').trim();
+  const link=phoneLink(value);
+  if(which===2){ l.contato2=value||null; l.whatsapp2=link; }
+  else{ l.contato=value||null; l.whatsapp=link; }
+  l.historico.unshift({t:nowStamp(),txt:`WhatsApp ${which===2?'2 ':''}atualizado: ${value||'—'}${(value&&!link)?' (número inválido — link não gerado)':''}`});
+  save(); renderAll();
+  toast(link? `Número salvo — link do WhatsApp ${which===2?'2 ':''}gerado`:'Número salvo','info');
+}
+function markContactToday(id){
+  const l = leads.find(x=>x.id===id); if(!l) return;
+  l.ultimoContato = today();
+  l.historico.unshift({t:nowStamp(), txt:'Contato registrado manualmente'});
+  save(); renderAll(id);
+  toast(`<b>${l.empresa}</b> — contato de hoje registrado.`,'info');
+}
+function addNote(id){
+  const el = document.getElementById('noteInput'); if(!el || !el.value.trim()) return;
+  const l = leads.find(x=>x.id===id);
+  l.historico.unshift({t:nowStamp(), txt:'Anotação: '+el.value.trim()});
+  el.value=''; save(); openDrawer(id); toast('Anotação registrada no histórico','info');
+}
+
+/* ===== FILTROS ===== */
+function filtered(){
+  const q = state.search.toLowerCase();
+  return leads.filter(l=>{
+    if(q && !`${l.empresa} ${l.cidade} ${l.segmento} ${l.contato||''} ${l.obs||''} ${l.status}`.toLowerCase().includes(q)) return false;
+    if(state.fStatus && l.status!==state.fStatus) return false;
+    if(state.fPrio && l.prioridade!==state.fPrio) return false;
+    if(state.fCidade && l.cidade!==state.fCidade) return false;
+    if(state.fSeg && l.segmento!==state.fSeg) return false;
+    if(state.onlyFu && !(l.followUp && l.followUp<=today() && !CLOSED.includes(l.status))) return false;
+    return true;
+  }).sort((a,b)=>{
+    let va=a[state.sortKey]??'', vb=b[state.sortKey]??'';
+    if(state.sortKey==='prioridade'){ const o={'Muito alta':0,'Alta':1,'Média':2,'Baixa':3}; va=o[va]??9; vb=o[vb]??9; }
+    if(state.sortKey==='valor'){ va=a.valor||0; vb=b.valor||0; }
+    return (va>vb?1:va<vb?-1:0)*state.sortDir;
+  });
+}
+function sortBy(k){ state.sortDir = state.sortKey===k ? -state.sortDir : 1; state.sortKey=k; renderAll(); }
+function clearFilters(){
+  state.search=state.fStatus=state.fPrio=state.fCidade=state.fSeg='';
+  state.onlyFu=false;
+  document.getElementById('globalSearch').value='';
+  document.getElementById('chipFu').classList.remove('on');
+  ['fStatus','fPrio','fCidade','fSeg'].forEach(i=>document.getElementById(i).value='');
+  renderAll();
+}
+
+/* ===== RENDER: KPIs ===== */
+function renderKPIs(){
+  const t=today();
+  const active = leads.filter(l=>!CLOSED.includes(l.status));
+  const contacted = leads.filter(l=>l.status!=='Novo');
+  const engaged = leads.filter(l=>['Respondeu','Interessado','Orçamento enviado','Fechado','Orçamento recusado','Desinteressado'].includes(l.status));
+  const late = leads.filter(l=>l.followUp && l.followUp<t && !CLOSED.includes(l.status));
+  const todayFu = leads.filter(l=>l.followUp===t && !CLOSED.includes(l.status));
+  const orc = leads.filter(l=>l.status==='Orçamento enviado');
+  const won = leads.filter(l=>l.status==='Fechado');
+  const orcSum = orc.reduce((s,l)=>s+(l.valor||0),0);
+  const wonSum = won.reduce((s,l)=>s+(l.valor||0),0);
+  const rate = contacted.length? Math.round(engaged.length/contacted.length*100):0;
+  const kpis=[
+    {lbl:'Total de leads', val:leads.length, c:'var(--accent)', d:`${active.length} ativos no funil`},
+    {lbl:'Contatados', val:contacted.length, c:'var(--blue)', d:`${leads.filter(l=>l.status==='Novo').length} ainda não abordados`},
+    {lbl:'Taxa de resposta', val:rate+'%', c:'var(--cyan)', d:`${engaged.length} interagiram`},
+    {lbl:'Em orçamento', val:orc.length, c:'var(--yellow)', d:orcSum? brl(orcSum)+' em propostas':'sem valores definidos'},
+    {lbl:'Fechados', val:won.length, c:'var(--green)', d:wonSum? brl(wonSum)+' ganhos':'nenhum ainda'},
+    {lbl:'Follow-ups pendentes', val:late.length+todayFu.length, c:late.length?'var(--red)':'var(--orange)', d:`${late.length} atrasados · ${todayFu.length} hoje`},
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>
+    `<div class="kpi" style="--kc:${k.c}"><div class="lbl">${k.lbl}</div><div class="val">${k.val}</div><div class="delta">${k.d}</div></div>`).join('');
+  const badge=document.getElementById('fuBadge');
+  const n=late.length+todayFu.length;
+  badge.textContent=n; badge.classList.toggle('show',n>0);
+}
+
+/* ===== RENDER: CHARTS ===== */
+function hbarChart(el, data, colorFn){
+  const max = Math.max(...data.map(d=>d.v),1);
+  el.innerHTML = data.map((d,i)=>
+    `<div class="hbar-row"><div class="nm" title="${d.k}">${d.k}</div><div class="tr"><div class="fl" style="width:${Math.max(d.v/max*100,4)}%;background:${colorFn(d,i)}">${d.v}</div></div></div>`).join('');
+}
+function renderCharts(){
+  const cnt=(key)=>{ const m={}; leads.forEach(l=>{ const v=l[key]||'—'; m[v]=(m[v]||0)+1; }); return m; };
+  const sc=cnt('status');
+  hbarChart(document.getElementById('chartStatus'), STATUSES.map(s=>({k:s.id,v:sc[s.id]||0})), d=>stColor(d.k));
+  // funil (usa stage de cada status: perdidos contam até onde chegaram)
+  const stages=['Novo','Contato enviado','Respondeu','Interessado','Orçamento enviado','Fechado'];
+  const stageOf = s => (STATUSES.find(x=>x.id===s)||{stage:0}).stage;
+  const cum = stages.map((_,i)=> leads.filter(l=> stageOf(l.status)>=i).length);
+  const fMax=Math.max(cum[0],1);
+  document.getElementById('chartFunnel').innerHTML = stages.map((s,i)=>
+    `<div class="fstep" style="width:${Math.max(cum[i]/fMax*100,30)}%;background:${stColor(s)}"><span>${s}</span><b>${cum[i]}</b></div>`).join('');
+  // prioridade donut
+  const pc=cnt('prioridade'); const order=['Muito alta','Alta','Média','Baixa'].filter(p=>pc[p]);
+  const total=leads.length||1; let acc=0;
+  const segs=order.map(p=>{ const frac=pc[p]/total; const seg=`${PRIO_COLORS[p]} ${acc*360}deg ${(acc+frac)*360}deg`; acc+=frac; return seg; });
+  document.getElementById('chartPrio').innerHTML =
+    `<div style="width:150px;height:150px;border-radius:50%;background:conic-gradient(${segs.join(',')});display:flex;align-items:center;justify-content:center">
+       <div style="width:92px;height:92px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center">
+         <b style="font-size:22px">${leads.length}</b><span style="font-size:10px;color:var(--muted)">leads</span></div></div>
+     <div class="legend">${order.map(p=>`<div class="li"><span class="sw" style="background:${PRIO_COLORS[p]}"></span>${p}: <b>${pc[p]}</b> (${Math.round(pc[p]/total*100)}%)</div>`).join('')}</div>`;
+  const top=(m,n)=>Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>({k,v}));
+  const cools=['#4f6ef7','#3b82f6','#2aa8c4','#2eb872','#d4a017','#e8763a','#d0679d','#8b5cf6'];
+  hbarChart(document.getElementById('chartCidade'), top(cnt('cidade'),8), (d,i)=>cools[i%8]);
+  hbarChart(document.getElementById('chartSeg'), top(cnt('segmento'),8), (d,i)=>cools[(i+3)%8]);
+  const t=today();
+  const fus=leads.filter(l=>l.followUp && !CLOSED.includes(l.status)).sort((a,b)=>a.followUp.localeCompare(b.followUp)).slice(0,6);
+  document.getElementById('dashFu').innerHTML = fus.length? fus.map(l=>{
+    const c=l.followUp<t?'var(--red)':l.followUp===t?'var(--orange)':'var(--green)';
+    const tag=l.followUp<t?'ATRASADO':l.followUp===t?'HOJE':fmtBR(l.followUp);
+    return `<div class="fu-item" onclick="openDrawer(${l.id})"><div class="fud" style="color:${c}">${tag}</div><div class="fue"><b>${l.empresa}</b><span>${l.cidade} · ${l.status}</span></div></div>`;
+  }).join('') : '<div class="fu-empty">Nenhum follow-up agendado</div>';
+}
+
+/* ===== RENDER: TABLE ===== */
+function renderTable(){
+  const rows = filtered();
+  const t=today();
+  document.getElementById('countInfo').textContent = `${rows.length} de ${leads.length} leads`;
+  document.getElementById('tbody').innerHTML = rows.map(l=>{
+    const sc=stColor(l.status);
+    const fuClass = l.followUp && !CLOSED.includes(l.status) ? (l.followUp<t?'overdue':l.followUp===t?'today':'') : '';
+    return `<tr id="row-${l.id}" style="border-left-color:${sc}" onclick="openDrawer(${l.id})">
+      <td class="td-emp"><b>${l.empresa}</b><span>${l.segmento||''}</span></td>
+      <td>${l.cidade||'—'}</td>
+      <td><span class="prio-pill" style="background:${PRIO_COLORS[l.prioridade]||'#64748b'}22;color:${PRIO_COLORS[l.prioridade]||'#64748b'}">${l.prioridade||'—'}</span></td>
+      <td onclick="event.stopPropagation()"><select class="status-sel" style="background-color:${sc}" onchange="setStatus(${l.id},this.value)">
+        ${STATUSES.map(s=>`<option ${s.id===l.status?'selected':''}>${s.id}</option>`).join('')}</select></td>
+      <td onclick="event.stopPropagation()"><input type="date" class="date-in" value="${l.ultimoContato||''}" onchange="setField(${l.id},'ultimoContato',this.value)"></td>
+      <td onclick="event.stopPropagation()"><input type="date" class="date-in ${fuClass}" value="${l.followUp||''}" onchange="setField(${l.id},'followUp',this.value)"></td>
+      <td onclick="event.stopPropagation()"><input type="number" class="num-in" placeholder="0,00" min="0" step="50" value="${l.valor||''}" onchange="setField(${l.id},'valor',this.value)"></td>
+      <td onclick="event.stopPropagation()">
+        ${l.whatsapp?`<button class="ico-btn" title="Abrir WhatsApp com a mensagem" onclick="openWA(${l.id},1)">${I('chat')}</button>`:''}
+        ${l.whatsapp2?`<button class="ico-btn" title="Abrir WhatsApp 2" onclick="openWA(${l.id},2)" style="position:relative">${I('chat')}<span style="font-size:8.5px;font-weight:700;position:absolute;top:0;right:-1px">2</span></button>`:''}
+        ${l.mensagem?`<button class="ico-btn" title="Copiar mensagem" onclick="copyMsg(${l.id})">${I('copy')}</button>`:''}
+        <button class="ico-btn" title="Registrar contato hoje" onclick="markContactToday(${l.id})">${I('check')}</button>
+        ${l.instagram&&l.instagram.startsWith('http')?`<a class="ico-btn" href="${l.instagram}" target="_blank" title="Instagram" onclick="event.stopPropagation()">${I('insta')}</a>`:''}
+      </td></tr>`;
+  }).join('');
+}
+
+/* ===== RENDER: KANBAN ===== */
+function renderKanban(){
+  const rows=filtered();
+  document.getElementById('kanban').innerHTML = STATUSES.map(s=>{
+    const cards=rows.filter(l=>l.status===s.id);
+    const colSum = cards.reduce((a,l)=>a+(l.valor||0),0);
+    return `<div class="kcol" data-status="${s.id}" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="dropCard(event,this)">
+      <div class="kcol-head"><span class="kdot" style="background:${s.color}"></span>${s.id}<span class="knum">${cards.length}${colSum?` · ${brl(colSum)}`:''}</span></div>
+      <div class="kcards">${cards.map(l=>{
+        const t=today();
+        const fu=l.followUp?`<div class="kfu" style="color:${l.followUp<t?'var(--red)':l.followUp===t?'var(--orange)':'var(--green)'}">${I('clock',12)} ${l.followUp<t?'Atrasado — ':''}${fmtBR(l.followUp)}</div>`:'';
+        return `<div class="kcard" draggable="true" style="--sc:${s.color}" data-id="${l.id}" ondragstart="dragCard(event,this)" ondragend="this.classList.remove('dragging')" onclick="openDrawer(${l.id})">
+          <b>${l.empresa}</b><div style="font-size:11px;color:var(--muted)">${l.cidade||''}</div>
+          <div class="kmeta"><span style="color:${PRIO_COLORS[l.prioridade]||'#888'}">${l.prioridade||'—'}</span>${l.valor?`<span style="color:var(--green)">${brl(l.valor)}</span>`:''}<span>${(l.segmento||'').slice(0,18)}</span></div>${fu}</div>`;
+      }).join('')}</div></div>`;
+  }).join('');
+}
+let dragId=null;
+function dragCard(ev,el){ dragId=+el.dataset.id; el.classList.add('dragging'); ev.dataTransfer.effectAllowed='move'; }
+function dropCard(ev,col){ ev.preventDefault(); col.classList.remove('dragover'); if(dragId!=null){ setStatus(dragId, col.dataset.status); dragId=null; } }
+
+/* ===== RENDER: FOLLOW-UPS ===== */
+function renderFu(){
+  const t=today(), next7=addDays(t,7);
+  const act=leads.filter(l=>!CLOSED.includes(l.status));
+  const mk=(arr,tagFn)=> arr.length? arr.map(l=>`<div class="fu-item" onclick="openDrawer(${l.id})">
+      <div class="fud" style="color:${tagFn(l).c}">${tagFn(l).t}</div>
+      <div class="fue" style="flex:1"><b>${l.empresa}</b><span>${l.cidade} · ${l.segmento} · <span style="color:${stColor(l.status)}">${l.status}</span></span></div>
+      ${l.whatsapp?`<button class="btn sm" onclick="event.stopPropagation();openWA(${l.id})">${I('chat',13)} WhatsApp</button>`:''}
+      <button class="btn sm" onclick="event.stopPropagation();snooze(${l.id})">Adiar 2 dias</button>
+    </div>`).join('') : '<div class="fu-empty">Nada por aqui</div>';
+  document.getElementById('fuLate').innerHTML  = mk(act.filter(l=>l.followUp&&l.followUp<t).sort((a,b)=>a.followUp.localeCompare(b.followUp)), l=>({t:fmtBR(l.followUp),c:'var(--red)'}));
+  document.getElementById('fuToday').innerHTML = mk(act.filter(l=>l.followUp===t), ()=>({t:'HOJE',c:'var(--orange)'}));
+  document.getElementById('fuNext').innerHTML  = mk(act.filter(l=>l.followUp&&l.followUp>t&&l.followUp<=next7).sort((a,b)=>a.followUp.localeCompare(b.followUp)), l=>({t:fmtBR(l.followUp),c:'var(--green)'}));
+  document.getElementById('fuNone').innerHTML  = mk(act.filter(l=>!l.followUp&&l.status!=='Novo'), ()=>({t:'—',c:'var(--muted)'}));
+}
+function snooze(id){ const l=leads.find(x=>x.id===id); l.followUp=addDays(l.followUp&&l.followUp>today()?l.followUp:today(),2); l.historico.unshift({t:nowStamp(),txt:`Follow-up adiado para ${fmtBR(l.followUp)}`}); save(); renderAll(); toast(`<b>${l.empresa}</b> — follow-up adiado para ${fmtBR(l.followUp)}`,'info'); }
+
+/* ===== DRAWER ===== */
+let openId=null;
+function openDrawer(id){
+  openId=id; const l=leads.find(x=>x.id===id); if(!l) return;
+  document.getElementById('dTitle').textContent=l.empresa;
+  document.getElementById('dSub').innerHTML=`${l.cidade||''} · ${l.segmento||''} · <span style="color:${stColor(l.status)};font-weight:600">${l.status}</span>${l.valor?` · <span style="color:var(--green);font-weight:600">${brl(l.valor)}</span>`:''}`;
+  const link=(u,lbl,ic)=> u? `<a class="btn sm" href="${u}" target="_blank">${I(ic,13)} ${lbl}</a>`:'';
+  document.getElementById('drawerBody').innerHTML=`
+    <div class="dsec"><div class="dlinks">
+      ${l.whatsapp?`<button class="btn sm primary" onclick="openWA(${l.id},1)">${I('chat',13)} WhatsApp${l.whatsapp2?' 1':''}</button>`:''}
+      ${l.whatsapp2?`<button class="btn sm primary" onclick="openWA(${l.id},2)">${I('chat',13)} WhatsApp 2</button>`:''}
+      ${l.mensagem?`<button class="btn sm" onclick="copyMsg(${l.id})">${I('copy',13)} Copiar mensagem</button>`:''}
+      ${link(l.instagram&&l.instagram.startsWith('http')?l.instagram:null,'Instagram','insta')}
+      ${link(l.site,'Site','globe')}
+    </div></div>
+    <div class="dsec"><h4>Gestão</h4><div class="dgrid">
+      <div class="dfield"><label>Status</label><select onchange="setStatus(${l.id},this.value)" class="status-sel" style="background-color:${stColor(l.status)};width:100%">${STATUSES.map(s=>`<option ${s.id===l.status?'selected':''}>${s.id}</option>`).join('')}</select></div>
+      <div class="dfield"><label>Prioridade</label><select onchange="setField(${l.id},'prioridade',this.value)">${['Muito alta','Alta','Média','Baixa'].map(p=>`<option ${p===l.prioridade?'selected':''}>${p}</option>`).join('')}</select></div>
+      <div class="dfield"><label>Último contato</label><input type="date" value="${l.ultimoContato||''}" onchange="setField(${l.id},'ultimoContato',this.value)"></div>
+      <div class="dfield"><label>Próximo follow-up</label><input type="date" value="${l.followUp||''}" onchange="setField(${l.id},'followUp',this.value)"></div>
+      <div class="dfield"><label>Valor do orçamento (R$)</label><input type="number" min="0" step="50" value="${l.valor||''}" placeholder="0,00" onchange="setField(${l.id},'valor',this.value)"></div>
+      <div class="dfield"><label>Responsável</label><input value="${l.responsavel||''}" onchange="setField(${l.id},'responsavel',this.value)" placeholder="Lucas"></div>
+    </div></div>
+    <div class="dsec"><h4>Contato (editável)</h4><div class="dgrid">
+      <div class="dfield"><label>WhatsApp principal${l.whatsapp?' — link ativo':''}</label><input value="${(l.contato||'').replace(/"/g,'&quot;')}" placeholder="(21) 99999-9999" onchange="setPhone(${l.id},1,this.value)"></div>
+      <div class="dfield"><label>WhatsApp 2 (opcional)${l.whatsapp2?' — link ativo':''}</label><input value="${(l.contato2||'').replace(/"/g,'&quot;')}" placeholder="(21) 98888-8888" onchange="setPhone(${l.id},2,this.value)"></div>
+      <div class="dfield"><label>E-mail</label><input value="${(l.email||'').replace(/"/g,'&quot;')}" onchange="setField(${l.id},'email',this.value)"></div>
+      <div class="dfield"><label>Endereço</label><input value="${(l.endereco||'').replace(/"/g,'&quot;')}" onchange="setField(${l.id},'endereco',this.value)"></div>
+    </div></div>
+    <div class="dsec"><h4>Inteligência</h4>
+      <div class="dfield"><label>Situação digital</label><div class="dval">${l.situacao||'—'}</div></div>
+      <div class="dfield" style="margin-top:8px"><label>Oportunidade sugerida</label><div class="dval">${l.oportunidade||'—'}</div></div>
+      <div class="dfield" style="margin-top:8px"><label>Observações</label><textarea onchange="setField(${l.id},'obs',this.value)">${l.obs||''}</textarea></div>
+    </div>
+    ${l.mensagem?`<div class="dsec"><h4>Mensagem personalizada</h4><div class="msg-box">${l.mensagem.replace(/</g,'&lt;')}</div></div>`:''}
+    <div class="dsec"><h4>Adicionar anotação</h4>
+      <div style="display:flex;gap:8px"><input id="noteInput" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;outline:none" placeholder="Ex.: ligou de volta, pediu desconto, aceitou proposta..." onkeydown="if(event.key==='Enter')addNote(${l.id})"><button class="btn sm primary" onclick="addNote(${l.id})">Salvar</button></div>
+    </div>
+    <div class="dsec"><h4>Histórico (automático)</h4><div class="hist">${(l.historico||[]).slice(0,25).map(h=>`<div class="hi"><div class="ht">${h.t}</div>${h.txt}</div>`).join('')||'—'}</div></div>
+    <div class="dsec"><button class="btn sm danger" onclick="deleteLead(${l.id})">${I('trash',13)} Excluir lead</button></div>`;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){ openId=null; document.getElementById('overlay').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+function deleteLead(id){ const l=leads.find(x=>x.id===id); if(!confirm(`Excluir "${l.empresa}"?`)) return; leads=leads.filter(x=>x.id!==id); save(); closeDrawer(); renderAll(); toast(`Lead <b>${l.empresa}</b> excluído`,'warn'); }
+
+/* ===== AÇÕES WHATSAPP / MENSAGEM ===== */
+function openWA(id,which){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  const wa = which===2 ? l.whatsapp2 : l.whatsapp; if(!wa) return;
+  const url = l.mensagem ? `${wa}?text=${encodeURIComponent(l.mensagem)}` : wa;
+  window.open(url,'_blank');
+  if(l.status==='Novo'){ setStatus(id,'Contato enviado'); } // abriu WhatsApp de lead novo → marca como enviado
+  else { l.historico.unshift({t:nowStamp(),txt:'WhatsApp aberto'}); l.ultimoContato=today(); save(); renderAll(id); }
+}
+function copyMsg(id){
+  const l=leads.find(x=>x.id===id); if(!l||!l.mensagem) return;
+  navigator.clipboard.writeText(l.mensagem).then(()=>toast(`Mensagem de <b>${l.empresa}</b> copiada`,'info'))
+    .catch(()=>{ const ta=document.createElement('textarea'); ta.value=l.mensagem; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Mensagem copiada','info'); });
+}
+
+/* ===== NOVO LEAD ===== */
+function openNewLead(){ document.getElementById('modalNew').classList.add('open'); setTimeout(()=>document.getElementById('nEmpresa').focus(),80); }
+function saveNewLead(){
+  const g=i=>document.getElementById(i).value.trim();
+  if(!g('nEmpresa')){ toast('Informe o nome da empresa','err'); return; }
+  const contato=g('nContato'), contato2=g('nContato2');
+  leads.push({
+    id: Math.max(0,...leads.map(l=>l.id))+1,
+    empresa:g('nEmpresa'), cidade:g('nCidade'), segmento:g('nSegmento'), prioridade:document.getElementById('nPrio').value,
+    tipoContato: contato?'WhatsApp':null, contato: contato||null,
+    whatsapp: phoneLink(contato), contato2: contato2||null, whatsapp2: phoneLink(contato2),
+    instagram:g('nInsta')||null, site:g('nSite')||null, temSite:document.getElementById('nTemSite').value,
+    email:null, endereco:null, situacao:null, oportunidade:null,
+    status:'Novo', ultimoContato:null, followUp:null, responsavel:'Lucas', valor:null,
+    obs:g('nObs')||null, fonteContato:null, fontePresenca:null, verificadoEm:today(), mensagem:null,
+    historico:[{t:nowStamp(),txt:'Lead criado manualmente'}]
+  });
+  save(); closeModal('modalNew'); ['nEmpresa','nCidade','nSegmento','nContato','nContato2','nInsta','nSite','nObs'].forEach(i=>document.getElementById(i).value='');
+  renderAll(); toast('Novo lead adicionado');
+}
+
+/* ===== IMPORTAÇÃO ===== */
+const HEADER_MAP={'id':'id','empresa':'empresa','cidade':'cidade','segmento':'segmento','prioridade':'prioridade','tipo de contato':'tipoContato','contato público':'contato','link whatsapp':'whatsapp','contato 2':'contato2','whatsapp 2':'contato2','link whatsapp 2':'whatsapp2','instagram':'instagram','site/página':'site','possui site próprio?':'temSite','e-mail':'email','endereço':'endereco','situação digital':'situacao','oportunidade sugerida':'oportunidade','status':'status','último contato':'ultimoContato','próximo follow-up':'followUp','responsável':'responsavel','observações':'obs','fonte do contato':'fonteContato','fonte da presença':'fontePresenca','verificado em':'verificadoEm','mensagem personalizada':'mensagem','valor':'valor','orçamento (r$)':'valor','valor do orçamento':'valor'};
+function openImport(){ document.getElementById('modalImport').classList.add('open'); document.getElementById('impLog').style.display='none'; }
+function impLog(msg){ const el=document.getElementById('impLog'); el.style.display='block'; el.textContent+=msg+'\n'; el.scrollTop=el.scrollHeight; }
+
+function mergeLeads(newOnes){
+  const norm=s=>(s||'').toString().toLowerCase().trim();
+  const existing=new Set(leads.map(l=>norm(l.empresa)));
+  const existingWA=new Set(leads.map(l=>norm(l.whatsapp)).filter(Boolean));
+  let added=0, skipped=0;
+  let nextId=Math.max(0,...leads.map(l=>l.id))+1;
+  newOnes.forEach(n=>{
+    if(!n.empresa){ skipped++; return; }
+    if(existing.has(norm(n.empresa)) || (n.whatsapp&&existingWA.has(norm(n.whatsapp)))){ skipped++; return; }
+    n.id=nextId++;
+    if(MIGRATE[n.status]) n.status=MIGRATE[n.status];
+    n.status=STATUSES.some(s=>s.id===n.status)?n.status:'Novo';
+    n.valor=parseFloat(n.valor)||null;
+    if(n.contato&&!n.whatsapp) n.whatsapp=phoneLink(n.contato);
+    if(n.contato2&&!n.whatsapp2) n.whatsapp2=phoneLink(n.contato2);
+    n.historico=[{t:nowStamp(),txt:'Lead importado de arquivo'}];
+    leads.push(n); existing.add(norm(n.empresa)); added++;
+  });
+  save(); renderAll();
+  impLog(`Concluído: ${added} lead(s) adicionados, ${skipped} ignorados (duplicados/vazios).`);
+  toast(`Importação: <b>${added}</b> novos leads, ${skipped} duplicados ignorados`);
+}
+function rowsToLeads(headers,rows){
+  const idx=headers.map(h=>HEADER_MAP[(h||'').toString().toLowerCase().trim()]||null);
+  return rows.map(r=>{ const o={}; idx.forEach((k,i)=>{ if(k&&r[i]!=null&&r[i]!=='') o[k]= typeof r[i]==='string'? r[i].trim(): r[i]; });
+    ['ultimoContato','followUp','verificadoEm'].forEach(k=>{ if(o[k] instanceof Date) o[k]=o[k].toISOString().slice(0,10); else if(typeof o[k]==='number'){ o[k]=new Date(Date.UTC(1899,11,30)+o[k]*864e5).toISOString().slice(0,10);} });
+    return o; });
+}
+function parseCSV(text){
+  const rows=[]; let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){ const c=text[i];
+    if(inQ){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else inQ=false; } else cur+=c; }
+    else if(c==='"') inQ=true;
+    else if(c===','||c===';'){ row.push(cur);cur=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; row.push(cur);cur=''; if(row.some(x=>x!=='')) rows.push(row); row=[]; }
+    else cur+=c; }
+  if(cur!==''||row.length){ row.push(cur); if(row.some(x=>x!=='')) rows.push(row); }
+  return rows;
+}
+async function handleFile(file){
+  impLog(`Lendo "${file.name}"...`);
+  const ext=file.name.split('.').pop().toLowerCase();
+  try{
+    if(ext==='json'){
+      const data=JSON.parse(await file.text());
+      if(Array.isArray(data)&&data.length&&data[0].empresa!==undefined){
+        if(confirm('Backup JSON detectado. SUBSTITUIR todos os dados atuais por este backup?\n(Cancelar = mesclar apenas leads novos)')){ leads=migrate(data); save(); renderAll(); impLog('Backup restaurado por completo.'); toast('Backup restaurado'); }
+        else mergeLeads(data);
+      } else impLog('JSON não reconhecido.');
+    } else if(ext==='csv'){
+      const rows=parseCSV(await file.text());
+      if(rows.length<2){ impLog('CSV vazio.'); return; }
+      mergeLeads(rowsToLeads(rows[0],rows.slice(1)));
+    } else if(ext==='xlsx'){
+      if(typeof XLSX==='undefined'){
+        impLog('Carregando leitor de XLSX (precisa de internet na 1ª vez)...');
+        await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=res; s.onerror=()=>rej(new Error('Sem internet — converta para CSV e importe novamente.')); document.head.appendChild(s); });
+      }
+      const wb=XLSX.read(await file.arrayBuffer(),{cellDates:true});
+      const sheet=wb.Sheets[wb.SheetNames.includes('Leads')?'Leads':wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:null});
+      if(rows.length<2){ impLog('Planilha vazia.'); return; }
+      mergeLeads(rowsToLeads(rows[0],rows.slice(1)));
+    } else impLog('Formato não suportado. Use .xlsx, .csv ou .json');
+  }catch(e){ impLog('Erro: '+e.message); }
+}
+
+/* ===== EXPORT ===== */
+function exportMenu(){ document.getElementById('modalExport').classList.add('open'); }
+function download(name,content,type){ const b=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+function exportCSV(){
+  const cols=[['ID','id'],['Empresa','empresa'],['Cidade','cidade'],['Segmento','segmento'],['Prioridade','prioridade'],['Tipo de contato','tipoContato'],['Contato público','contato'],['Link WhatsApp','whatsapp'],['Contato 2','contato2'],['Link WhatsApp 2','whatsapp2'],['Instagram','instagram'],['Site/página','site'],['Possui site próprio?','temSite'],['E-mail','email'],['Endereço','endereco'],['Situação digital','situacao'],['Oportunidade sugerida','oportunidade'],['Status','status'],['Último contato','ultimoContato'],['Próximo follow-up','followUp'],['Valor do orçamento','valor'],['Responsável','responsavel'],['Observações','obs'],['Fonte do contato','fonteContato'],['Fonte da presença','fontePresenca'],['Verificado em','verificadoEm'],['Mensagem personalizada','mensagem']];
+  const esc=v=>{ v=(v==null?'':String(v)); return /[",\n;]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const csv='﻿'+cols.map(c=>c[0]).join(',')+'\n'+leads.map(l=>cols.map(c=>esc(l[c[1]])).join(',')).join('\n');
+  download(`leads_crm_${today()}.csv`,csv,'text/csv;charset=utf-8'); toast('CSV exportado','info');
+}
+function exportJSON(){ download(`backup_crm_${today()}.json`,JSON.stringify(leads,null,1),'application/json'); toast('Backup JSON gerado','info'); }
+function resetData(){ if(!confirm('Isso apaga TODAS as alterações e volta aos 60 leads originais da planilha. Continuar?')) return; localStorage.removeItem(STORE_KEY); load(); renderAll(); closeModal('modalExport'); toast('Dados originais restaurados','warn'); }
+
+/* ===== UI HELPERS ===== */
+function toast(html,type=''){ const t=document.createElement('div'); t.className='toast '+type; t.innerHTML=html; document.getElementById('toasts').appendChild(t); setTimeout(()=>{t.classList.add('out'); setTimeout(()=>t.remove(),320);},4200); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.nav-item[data-view]').forEach(n=>n.onclick=()=>{
+  document.querySelectorAll('.nav-item[data-view]').forEach(x=>x.classList.remove('active')); n.classList.add('active');
+  state.view=n.dataset.view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+state.view).classList.add('active');
+  const titles={dashboard:['Dashboard','Visão geral do seu pipeline de prospecção'],leads:['Leads','Clique em uma linha para ver detalhes · mude o status direto na tabela'],pipeline:['Pipeline','Arraste os cards entre as colunas — o status e a data atualizam automaticamente'],followups:['Follow-ups','Sua agenda de recontato, organizada automaticamente']};
+  document.getElementById('viewTitle').textContent=titles[state.view][0];
+  document.getElementById('viewSub').textContent=titles[state.view][1];
+  renderAll();
+});
+const dz=document.getElementById('dropZone');
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('over');};
+dz.ondragleave=()=>dz.classList.remove('over');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);};
+document.getElementById('fileInput').onchange=e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=''; };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open')); }});
+
+/* ===== FILTER OPTIONS ===== */
+function fillFilters(){
+  const set=(id,vals,lbl)=>{ const el=document.getElementById(id); const cur=el.value;
+    el.innerHTML=`<option value="">${lbl}</option>`+[...vals].sort().map(v=>`<option>${v}</option>`).join(''); el.value=cur; };
+  set('fStatus',STATUSES.map(s=>s.id),'Status: todos');
+  set('fPrio',new Set(leads.map(l=>l.prioridade).filter(Boolean)),'Prioridade: todas');
+  set('fCidade',new Set(leads.map(l=>l.cidade).filter(Boolean)),'Cidade: todas');
+  set('fSeg',new Set(leads.map(l=>l.segmento).filter(Boolean)),'Segmento: todos');
+}
+
+/* ===== MASTER RENDER ===== */
+function renderAll(flashId){
+  fillFilters(); renderKPIs();
+  if(state.view==='dashboard') renderCharts();
+  if(state.view==='leads') renderTable();
+  if(state.view==='pipeline') renderKanban();
+  if(state.view==='followups') renderFu();
+  document.getElementById('footInfo').textContent=`${leads.length} leads · salvo automaticamente`;
+  if(openId!=null && document.getElementById('drawer').classList.contains('open')) openDrawer(openId);
+  if(flashId!=null){ const r=document.getElementById('row-'+flashId); if(r) r.classList.add('flash'); }
+}
+
+/* ===== BOOT ===== */
+load();
+document.getElementById('viewSub').textContent='Visão geral do seu pipeline de prospecção';
+renderAll();
+renderCharts();
+</script>
+</body>
+</html>

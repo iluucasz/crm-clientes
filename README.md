@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM de Leads — dev-lss
 
-## Getting Started
+CRM de prospecção construído em **Next.js 16 (App Router)** + **React 19** +
+**TypeScript**, com dados reais em **Postgres (Neon)**. Migração do protótipo
+`CRM_Leads.html` (single-file, localStorage) para uma arquitetura organizada,
+com persistência em banco, Server Actions e componentes desacoplados.
 
-First, run the development server:
+## Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Dashboard** — KPIs, funil de conversão, distribuição por status/prioridade,
+  top cidades/segmentos e próximos follow-ups.
+- **Leads** — tabela com busca, filtros, ordenação e edição rápida (status,
+  datas, valor) direto na linha.
+- **Pipeline** — kanban com arrastar-e-soltar entre status.
+- **Follow-ups** — agenda de retornos (atrasados, hoje, próximos 7 dias).
+- **Automação** — ao mudar o status, o "último contato" é registrado e o próximo
+  follow-up é sugerido automaticamente; todo evento entra no histórico do lead.
+- **WhatsApp** — disparo da mensagem personalizada com um clique.
+- **Importar / Exportar** — CSV e JSON (backup), com deduplicação na importação.
+
+## Arquitetura
+
+```
+app/
+  page.tsx              Server Component: busca leads do banco
+  layout.tsx            Metadata + shell HTML
+  actions/leads.ts      Server Actions (mutações + automação)
+  api/export/route.ts   Exportação CSV/JSON direto do banco
+components/             UI (client): shell, dashboard, tabela, kanban, drawer...
+lib/
+  db.ts                 Cliente Neon (Postgres)
+  domain.ts             Status, prioridades e regras do funil
+  format.ts             Formatação (BRL, datas, links WhatsApp)
+  selectors.ts          Filtros e agregações (puros)
+  repository/leads.ts   Acesso a dados (SQL) e mapeamento de/para o domínio
+  types.ts              Tipos do domínio
+scripts/
+  schema.sql            DDL das tabelas
+  seed.mjs              Cria o esquema e popula com os 60 leads reais
+data/seed-leads.json    Dados originais da planilha
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuração
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Crie o arquivo `.env` (não versionado) com a conexão do Neon:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```
+   DATABASE_URL=postgresql://usuario:senha@host.neon.tech/neondb?sslmode=require
+   ```
 
-## Learn More
+2. Instale as dependências e prepare o banco:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   pnpm install
+   pnpm db:seed        # cria as tabelas e insere os leads (idempotente)
+   # pnpm db:reset     # recomeço limpo (apaga e recria)
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Rode em desenvolvimento:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   pnpm dev
+   ```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> **Segurança:** o `.env` está no `.gitignore` e **não** é enviado ao GitHub.
+> Em produção (Vercel/etc.), configure `DATABASE_URL` nas variáveis de ambiente.
