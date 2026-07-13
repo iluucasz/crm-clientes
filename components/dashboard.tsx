@@ -116,7 +116,7 @@ export function Dashboard() {
                 key={f.s}
                 style={{
                   width: `${Math.max((f.v / fMax) * 100, 30)}%`,
-                  background: stColor(f.s),
+                  ["--funnel-color" as string]: stColor(f.s),
                 }}
               >
                 <span>{f.s}</span>
@@ -135,30 +135,12 @@ export function Dashboard() {
           </h3>
           <div className="donut-wrap">
             <div
-              style={{
-                width: 150,
-                height: 150,
-                borderRadius: "50%",
-                background: `conic-gradient(${segs.join(",")})`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="priority-donut"
+              style={{ background: `conic-gradient(${segs.join(",")})` }}
             >
-              <div
-                style={{
-                  width: 92,
-                  height: 92,
-                  borderRadius: "50%",
-                  background: "var(--card)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <b style={{ fontSize: 22 }}>{leads.length}</b>
-                <span style={{ fontSize: 10, color: "var(--muted)" }}>
+              <div className="priority-donut-center">
+                <b>{leads.length}</b>
+                <span>
                   leads
                 </span>
               </div>
@@ -228,7 +210,7 @@ export function Dashboard() {
                   <div className="fue">
                     <b>{l.empresa}</b>
                     <span>
-                      {l.cidade} · {l.status}
+                      #{l.id} · {l.cidade || "Sem cidade"} · {l.status}
                     </span>
                   </div>
                 </div>

@@ -24,16 +24,12 @@ import { CLOSED, statusConfig, stColor } from "@/lib/domain";
 import * as actions from "@/app/actions/leads";
 import { useToast } from "./toast";
 
-export type View = "dashboard" | "leads" | "pipeline" | "followups";
-
 interface CrmContextValue {
   leads: Lead[];
   filters: Filters;
   patchFilters: (p: Partial<Filters>) => void;
   clearFilters: () => void;
   sortBy: (key: keyof Lead) => void;
-  view: View;
-  setView: (v: View) => void;
   openId: number | null;
   openDrawer: (id: number) => void;
   closeDrawer: () => void;
@@ -82,7 +78,6 @@ export function CrmProvider({
 }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [view, setView] = useState<View>("dashboard");
   const [openId, setOpenId] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const toast = useToast();
@@ -274,6 +269,7 @@ export function CrmProvider({
         await actions.deleteLead(id);
         setLeads((prev) => prev.filter((l) => l.id !== id));
         setOpenId((cur) => (cur === id ? null : cur));
+        syncLeadParam(null);
         if (lead) toast(`Lead <b>${lead.empresa}</b> excluído`, "warn");
       });
     },
@@ -331,8 +327,6 @@ export function CrmProvider({
       patchFilters,
       clearFilters,
       sortBy,
-      view,
-      setView,
       openId,
       openDrawer,
       closeDrawer,
@@ -356,7 +350,6 @@ export function CrmProvider({
       patchFilters,
       clearFilters,
       sortBy,
-      view,
       openId,
       openDrawer,
       closeDrawer,

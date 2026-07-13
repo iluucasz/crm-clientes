@@ -10,7 +10,7 @@ import { today } from "@/lib/format";
 import type { Lead } from "@/lib/types";
 
 const COLUMNS: { key: keyof Lead; label: string }[] = [
-  { key: "empresa", label: "Empresa" },
+  { key: "empresa", label: "Lead / empresa" },
   { key: "cidade", label: "Cidade" },
   { key: "prioridade", label: "Prioridade" },
   { key: "status", label: "Status" },
@@ -73,7 +73,10 @@ export function LeadsTable() {
                 >
                   <td className="td-emp">
                     <b>{l.empresa}</b>
-                    <span>{l.segmento || ""}</span>
+                    <span>
+                      <span className="lead-row-id">#{l.id}</span>
+                      {l.segmento ? ` · ${l.segmento}` : ""}
+                    </span>
                   </td>
                   <td>{l.cidade || "—"}</td>
                   <td>
@@ -90,7 +93,13 @@ export function LeadsTable() {
                   <td onClick={stop}>
                     <select
                       className="status-sel"
-                      style={{ backgroundColor: sc }}
+                      id={`lead-${l.id}-status`}
+                      aria-label={`Status de ${l.empresa}`}
+                      style={{
+                        backgroundColor: `${sc}18`,
+                        borderColor: `${sc}66`,
+                        color: sc,
+                      }}
                       value={l.status}
                       onChange={(e) => setStatus(l.id, e.target.value)}
                     >
@@ -101,6 +110,8 @@ export function LeadsTable() {
                   </td>
                   <td onClick={stop}>
                     <input
+                      id={`lead-${l.id}-ultimo-contato`}
+                      aria-label={`Último contato de ${l.empresa}`}
                       type="date"
                       className="date-in"
                       value={l.ultimoContato || ""}
@@ -111,6 +122,8 @@ export function LeadsTable() {
                   </td>
                   <td onClick={stop}>
                     <input
+                      id={`lead-${l.id}-follow-up`}
+                      aria-label={`Próximo follow-up de ${l.empresa}`}
                       type="date"
                       className={`date-in ${fuClass}`}
                       value={l.followUp || ""}
@@ -121,6 +134,7 @@ export function LeadsTable() {
                   </td>
                   <td onClick={stop}>
                     <ValorInput
+                      id={`lead-${l.id}-valor`}
                       value={l.valor}
                       onCommit={(v) => setField(l.id, "valor", v)}
                     />

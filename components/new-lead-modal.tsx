@@ -55,8 +55,9 @@ export function NewLeadModal({ onClose }: { onClose: () => void }) {
       <div className="form-section">Identificação</div>
       <div className="dgrid">
         <div className="dfield" style={{ gridColumn: "1 / -1" }}>
-          <label>Empresa *</label>
+          <label htmlFor="new-lead-empresa">Empresa *</label>
           <input
+            id="new-lead-empresa"
             autoFocus
             value={form.empresa}
             placeholder="Nome da empresa"
@@ -67,22 +68,25 @@ export function NewLeadModal({ onClose }: { onClose: () => void }) {
           />
         </div>
         <div className="dfield">
-          <label>Cidade</label>
+          <label htmlFor="new-lead-cidade">Cidade</label>
           <input
+            id="new-lead-cidade"
             value={form.cidade}
             onChange={(e) => set("cidade", e.target.value)}
           />
         </div>
         <div className="dfield">
-          <label>Segmento</label>
+          <label htmlFor="new-lead-segmento">Segmento</label>
           <input
+            id="new-lead-segmento"
             value={form.segmento}
             onChange={(e) => set("segmento", e.target.value)}
           />
         </div>
         <div className="dfield">
-          <label>Prioridade</label>
+          <label htmlFor="new-lead-prioridade">Prioridade</label>
           <select
+            id="new-lead-prioridade"
             value={form.prioridade}
             onChange={(e) => set("prioridade", e.target.value as Prioridade)}
           >
@@ -92,8 +96,9 @@ export function NewLeadModal({ onClose }: { onClose: () => void }) {
           </select>
         </div>
         <div className="dfield">
-          <label>Possui site próprio?</label>
+          <label htmlFor="new-lead-tem-site">Possui site próprio?</label>
           <select
+            id="new-lead-tem-site"
             value={form.temSite}
             onChange={(e) => set("temSite", e.target.value)}
           >
@@ -107,32 +112,36 @@ export function NewLeadModal({ onClose }: { onClose: () => void }) {
       <div className="form-section">Contato</div>
       <div className="dgrid">
         <div className="dfield">
-          <label>WhatsApp</label>
+          <label htmlFor="new-lead-whatsapp">WhatsApp</label>
           <input
+            id="new-lead-whatsapp"
             value={form.contato}
             placeholder="(21) 99999-9999"
             onChange={(e) => set("contato", e.target.value)}
           />
         </div>
         <div className="dfield">
-          <label>WhatsApp 2</label>
+          <label htmlFor="new-lead-whatsapp-2">WhatsApp 2</label>
           <input
+            id="new-lead-whatsapp-2"
             value={form.contato2}
             placeholder="(21) 98888-8888"
             onChange={(e) => set("contato2", e.target.value)}
           />
         </div>
         <div className="dfield">
-          <label>Instagram</label>
+          <label htmlFor="new-lead-instagram">Instagram</label>
           <input
+            id="new-lead-instagram"
             value={form.instagram}
             placeholder="https://instagram.com/..."
             onChange={(e) => set("instagram", e.target.value)}
           />
         </div>
         <div className="dfield">
-          <label>Site</label>
+          <label htmlFor="new-lead-site">Site</label>
           <input
+            id="new-lead-site"
             value={form.site}
             placeholder="https://..."
             onChange={(e) => set("site", e.target.value)}
@@ -142,7 +151,11 @@ export function NewLeadModal({ onClose }: { onClose: () => void }) {
 
       <div className="form-section">Observações</div>
       <div className="dfield">
+        <label className="sr-only" htmlFor="new-lead-observacoes">
+          Observações
+        </label>
         <textarea
+          id="new-lead-observacoes"
           value={form.obs}
           placeholder="Anotações internas sobre este lead..."
           onChange={(e) => set("obs", e.target.value)}

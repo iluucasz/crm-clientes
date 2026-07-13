@@ -32,49 +32,51 @@ export function FollowUps() {
         <span className="dot" style={{ background: color }} />
         {title} <span style={{ color: "var(--muted)" }}>({items.length})</span>
       </h3>
-      {items.length ? (
-        items.map((l) => (
-          <div className="fu-item" key={l.id} onClick={() => openDrawer(l.id)}>
-            <div className="fud" style={{ color: tag(l).c }}>
-              {tag(l).t}
-            </div>
-            <div className="fue" style={{ flex: 1 }}>
-              <b>{l.empresa}</b>
-              <span>
-                {l.cidade} · {l.segmento} ·{" "}
-                <span style={{ color: stColor(l.status) }}>{l.status}</span>
-              </span>
-            </div>
-            {l.whatsapp && (
+      <div className="fu-list">
+        {items.length ? (
+          items.map((l) => (
+            <div className="fu-item" key={l.id} onClick={() => openDrawer(l.id)}>
+              <div className="fud" style={{ color: tag(l).c }}>
+                {tag(l).t}
+              </div>
+              <div className="fue">
+                <b>{l.empresa}</b>
+                <span>
+                  #{l.id} · {l.cidade || "Sem cidade"} · {l.segmento || "Sem segmento"} ·{" "}
+                  <span style={{ color: stColor(l.status) }}>{l.status}</span>
+                </span>
+              </div>
+              {l.whatsapp && (
+                <button
+                  className="btn sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openWhatsApp(l.id, 1);
+                  }}
+                >
+                  <Icon name="chat" size={13} /> WhatsApp
+                </button>
+              )}
               <button
                 className="btn sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  openWhatsApp(l.id, 1);
+                  snooze(l.id);
                 }}
               >
-                <Icon name="chat" size={13} /> WhatsApp
+                <Icon name="clock" size={13} /> Adiar 2 dias
               </button>
-            )}
-            <button
-              className="btn sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                snooze(l.id);
-              }}
-            >
-              Adiar 2 dias
-            </button>
-          </div>
-        ))
-      ) : (
-        <div className="fu-empty">Nada por aqui</div>
-      )}
+            </div>
+          ))
+        ) : (
+          <div className="fu-empty">Nada por aqui</div>
+        )}
+      </div>
     </div>
   );
 
   return (
-    <div className="view">
+    <div className="view followup-view">
       {section("Atrasados", "var(--red)", late, (l) => ({
         t: fmtBR(l.followUp),
         c: "var(--red)",

@@ -68,8 +68,11 @@ export function Pipeline() {
                       }}
                       onClick={() => openDrawer(l.id)}
                     >
-                      <b>{l.empresa}</b>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                      <div className="kcard-title">
+                        <b>{l.empresa}</b>
+                        <span className="kcard-id">#{l.id}</span>
+                      </div>
+                      <div className="kcard-city">
                         {l.cidade || ""}
                       </div>
                       <div className="kmeta">

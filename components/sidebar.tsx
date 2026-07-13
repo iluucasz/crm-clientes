@@ -1,14 +1,16 @@
 "use client";
 
-import { useCrm, type View } from "./crm-context";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useCrm } from "./crm-context";
 import { Icon, type IconName } from "./icon";
 import { pendingFollowUps } from "@/lib/selectors";
 
-const NAV: { view: View; label: string; icon: IconName }[] = [
-  { view: "dashboard", label: "Dashboard", icon: "dashboard" },
-  { view: "leads", label: "Leads", icon: "users" },
-  { view: "pipeline", label: "Pipeline", icon: "pipeline" },
-  { view: "followups", label: "Follow-ups", icon: "clock" },
+const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/leads", label: "Leads", icon: "users" },
+  { href: "/pipeline", label: "Pipeline", icon: "pipeline" },
+  { href: "/followups", label: "Follow-ups", icon: "clock" },
 ];
 
 export function Sidebar({
@@ -18,7 +20,8 @@ export function Sidebar({
   onImport: () => void;
   onExport: () => void;
 }) {
-  const { view, setView, leads } = useCrm();
+  const pathname = usePathname();
+  const { leads } = useCrm();
   const pending = pendingFollowUps(leads);
 
   return (
@@ -34,17 +37,18 @@ export function Sidebar({
       </div>
 
       {NAV.map((n) => (
-        <button
-          key={n.view}
-          className={`nav-item ${view === n.view ? "active" : ""}`}
-          onClick={() => setView(n.view)}
+        <Link
+          key={n.href}
+          href={n.href}
+          className={`nav-item ${pathname === n.href ? "active" : ""}`}
+          aria-current={pathname === n.href ? "page" : undefined}
         >
           <Icon name={n.icon} />
           <span className="tx">{n.label}</span>
-          {n.view === "followups" && pending > 0 && (
+          {n.href === "/followups" && pending > 0 && (
             <span className="badge">{pending}</span>
           )}
-        </button>
+        </Link>
       ))}
 
       <div className="spacer" />

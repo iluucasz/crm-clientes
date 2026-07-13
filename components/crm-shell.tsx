@@ -1,32 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Lead } from "@/lib/types";
-import { CrmProvider, useCrm, type View } from "./crm-context";
+import { CrmProvider, useCrm } from "./crm-context";
 import { ToastProvider } from "./toast";
 import { Sidebar } from "./sidebar";
-import { Dashboard } from "./dashboard";
-import { LeadsTable } from "./leads-table";
-import { Pipeline } from "./pipeline";
-import { FollowUps } from "./follow-ups";
 import { LeadDrawer } from "./lead-drawer";
 import { NewLeadModal } from "./new-lead-modal";
 import { ImportModal, ExportModal } from "./data-modals";
 import { Icon } from "./icon";
 
-const TITLES: Record<View, { title: string; sub: string }> = {
-  dashboard: { title: "Dashboard", sub: "Visão geral da prospecção" },
-  leads: { title: "Leads", sub: "Tabela completa com edição rápida" },
-  pipeline: { title: "Pipeline", sub: "Arraste os cards entre os status" },
-  followups: { title: "Follow-ups", sub: "Quem precisa de retorno" },
+const TITLES: Record<string, { title: string; sub: string }> = {
+  "/dashboard": { title: "Dashboard", sub: "Visão geral da prospecção" },
+  "/leads": { title: "Leads", sub: "Base completa e edição rápida" },
+  "/pipeline": { title: "Pipeline", sub: "Oportunidades por etapa comercial" },
+  "/followups": { title: "Follow-ups", sub: "Agenda de retornos e pendências" },
 };
 
 type Modal = null | "new" | "import" | "export";
 
-function Inner() {
-  const { view, filters, patchFilters } = useCrm();
+function Inner({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { filters, patchFilters } = useCrm();
   const [modal, setModal] = useState<Modal>(null);
-  const meta = TITLES[view];
+  const meta = TITLES[pathname] ?? TITLES["/dashboard"];
 
   return (
     <div className="app">
@@ -54,12 +52,7 @@ function Inner() {
           </button>
         </div>
 
-        <div className="content">
-          {view === "dashboard" && <Dashboard />}
-          {view === "leads" && <LeadsTable />}
-          {view === "pipeline" && <Pipeline />}
-          {view === "followups" && <FollowUps />}
-        </div>
+        <main className="content">{children}</main>
       </div>
 
       <LeadDrawer />
@@ -70,11 +63,17 @@ function Inner() {
   );
 }
 
-export function CrmShell({ initialLeads }: { initialLeads: Lead[] }) {
+export function CrmShell({
+  initialLeads,
+  children,
+}: {
+  initialLeads: Lead[];
+  children: React.ReactNode;
+}) {
   return (
     <ToastProvider>
       <CrmProvider initialLeads={initialLeads}>
-        <Inner />
+        <Inner>{children}</Inner>
       </CrmProvider>
     </ToastProvider>
   );

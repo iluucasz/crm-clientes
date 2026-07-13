@@ -23,6 +23,7 @@ export function FiltersBar({ count }: { count: number }) {
   return (
     <div className="filters">
       <select
+        aria-label="Filtrar por status"
         value={filters.fStatus}
         onChange={(e) => patchFilters({ fStatus: e.target.value })}
       >
@@ -32,6 +33,7 @@ export function FiltersBar({ count }: { count: number }) {
         ))}
       </select>
       <select
+        aria-label="Filtrar por prioridade"
         value={filters.fPrio}
         onChange={(e) => patchFilters({ fPrio: e.target.value })}
       >
@@ -41,6 +43,7 @@ export function FiltersBar({ count }: { count: number }) {
         ))}
       </select>
       <select
+        aria-label="Filtrar por cidade"
         value={filters.fCidade}
         onChange={(e) => patchFilters({ fCidade: e.target.value })}
       >
@@ -50,6 +53,7 @@ export function FiltersBar({ count }: { count: number }) {
         ))}
       </select>
       <select
+        aria-label="Filtrar por segmento"
         value={filters.fSeg}
         onChange={(e) => patchFilters({ fSeg: e.target.value })}
       >
@@ -58,15 +62,17 @@ export function FiltersBar({ count }: { count: number }) {
           <option key={s}>{s}</option>
         ))}
       </select>
-      <div
+      <button
+        type="button"
         className={`chip ${filters.onlyFu ? "on" : ""}`}
         onClick={() => patchFilters({ onlyFu: !filters.onlyFu })}
+        aria-pressed={filters.onlyFu}
       >
         Só follow-ups pendentes
-      </div>
-      <div className="chip" onClick={clearFilters}>
+      </button>
+      <button type="button" className="chip" onClick={clearFilters}>
         Limpar filtros
-      </div>
+      </button>
       <div className="count-info">
         {count} de {leads.length} leads
       </div>
