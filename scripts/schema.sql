@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS leads (
   fonte_presenca TEXT,
   verificado_em  DATE,
   mensagem       TEXT,
+  oferta         TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );

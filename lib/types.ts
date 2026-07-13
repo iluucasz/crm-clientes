@@ -40,6 +40,8 @@ export interface Lead {
   fontePresenca: string | null;
   verificadoEm: string | null;
   mensagem: string | null;
+  /** Texto de oferta/proposta (valores e como funciona) enviado ao cliente. */
+  oferta: string | null;
   historico: HistoryEntry[];
 }
 

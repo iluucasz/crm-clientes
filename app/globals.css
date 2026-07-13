@@ -1034,6 +1034,23 @@ tbody td {
   border-top: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.16);
 }
+/* Modal de detalhe do lead (centralizado, largo) */
+.lead-modal {
+  width: 860px;
+  max-width: 96vw;
+  padding: 0;
+}
+.lead-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 2px 9px;
+  border-radius: 20px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
 .drop-zone {
   border: 1.5px dashed var(--border);
   border-radius: 14px;

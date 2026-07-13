@@ -31,20 +31,31 @@ export function ValorInput({
   };
 
   return (
-    <input
-      type="number"
-      className={className}
-      placeholder="0,00"
-      min="0"
-      step="50"
-      inputMode="decimal"
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-      }}
-      onClick={(e) => e.stopPropagation()}
-    />
+    <>
+      <input
+        type="number"
+        className={className}
+        placeholder="0,00"
+        min="0"
+        step="50"
+        inputMode="decimal"
+        list="valores-sugeridos"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+        }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      <datalist id="valores-sugeridos">
+        <option value="800">Projeto simples / página única</option>
+        <option value="1000">Vitrine animada com WhatsApp</option>
+        <option value="1200">Vitrine + seções extras</option>
+        <option value="1500">Loja com vendas online</option>
+        <option value="1800">Loja completa</option>
+        <option value="2000">Loja completa + integrações</option>
+      </datalist>
+    </>
   );
 }

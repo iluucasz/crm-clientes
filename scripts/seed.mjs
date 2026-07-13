@@ -63,6 +63,7 @@ const COLUMN_MAP = {
   fontePresenca: "fonte_presenca",
   verificadoEm: "verificado_em",
   mensagem: "mensagem",
+  oferta: "oferta",
 };
 
 async function run() {

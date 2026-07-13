@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useTransition,
@@ -65,6 +66,17 @@ export function CrmProvider({
   const [openId, setOpenId] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const toast = useToast();
+
+  // Rede de segurança: se a página inicial vier sem leads (ex.: cold start no
+  // servidor), busca os dados no cliente sem precisar recarregar a página.
+  useEffect(() => {
+    if (initialLeads.length === 0) {
+      actions.listLeads().then((fresh) => {
+        if (fresh.length) setLeads(fresh);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const replaceLead = useCallback((updated: Lead | null) => {
     if (!updated) return;

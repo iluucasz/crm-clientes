@@ -35,6 +35,7 @@ const COLUMN_MAP = {
   fontePresenca: "fonte_presenca",
   verificadoEm: "verificado_em",
   mensagem: "mensagem",
+  oferta: "oferta",
 } as const;
 
 export type LeadField = keyof typeof COLUMN_MAP;
@@ -51,7 +52,7 @@ const SELECT_COLS = `
   fonte_contato AS "fonteContato",
   fonte_presenca AS "fontePresenca",
   verificado_em::text AS "verificadoEm",
-  mensagem
+  mensagem, oferta
 `;
 
 type Row = Record<string, unknown>;

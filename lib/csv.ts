@@ -29,6 +29,7 @@ export const EXPORT_COLUMNS: Array<[string, keyof Lead]> = [
   ["Fonte da presença", "fontePresenca"],
   ["Verificado em", "verificadoEm"],
   ["Mensagem personalizada", "mensagem"],
+  ["Oferta", "oferta"],
 ];
 
 /** Cabeçalho de importação (label normalizado) -> chave do domínio. */
@@ -60,6 +61,8 @@ export const IMPORT_HEADER_MAP: Record<string, string> = {
   "fonte da presença": "fontePresenca",
   "verificado em": "verificadoEm",
   "mensagem personalizada": "mensagem",
+  oferta: "oferta",
+  "texto de oferta": "oferta",
   valor: "valor",
   "orçamento (r$)": "valor",
   "valor do orçamento": "valor",

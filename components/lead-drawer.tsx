@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCrm } from "./crm-context";
 import { Icon } from "./icon";
 import { ValorInput } from "./valor-input";
@@ -22,46 +22,65 @@ export function LeadDrawer() {
   } = useCrm();
   const [note, setNote] = useState("");
   const lead = leads.find((l) => l.id === openId) || null;
-  const open = !!lead;
+
+  // Fecha com Esc.
+  useEffect(() => {
+    if (!lead) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeDrawer();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lead, closeDrawer]);
+
+  if (!lead) return null;
+
+  const sendOffer = () => {
+    if (!lead.whatsapp || !lead.oferta) return;
+    window.open(
+      `${lead.whatsapp}?text=${encodeURIComponent(lead.oferta)}`,
+      "_blank"
+    );
+  };
 
   return (
-    <>
+    <div className="modal" onClick={closeDrawer}>
       <div
-        className={`overlay ${open ? "open" : ""}`}
-        onClick={closeDrawer}
-      />
-      <div className={`drawer ${open ? "open" : ""}`}>
-        {lead && (
-          <>
-            <div
-              className="drawer-accent"
-              style={{ background: stColor(lead.status) }}
-            />
-            <div className="drawer-head">
-              <div style={{ flex: 1 }}>
-                <h2>{lead.empresa}</h2>
-                <div className="sub">
-                  {lead.cidade || ""} · {lead.segmento || ""} ·{" "}
-                  <span style={{ color: stColor(lead.status), fontWeight: 600 }}>
-                    {lead.status}
+        className="modal-box lead-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="drawer-accent"
+          style={{ background: stColor(lead.status) }}
+        />
+        <div className="drawer-head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2>
+              {lead.empresa}
+              <span className="lead-id">#{lead.id}</span>
+            </h2>
+            <div className="sub">
+              {lead.cidade || ""} · {lead.segmento || ""} ·{" "}
+              <span style={{ color: stColor(lead.status), fontWeight: 600 }}>
+                {lead.status}
+              </span>
+              {lead.valor ? (
+                <>
+                  {" "}
+                  ·{" "}
+                  <span style={{ color: "var(--green)", fontWeight: 600 }}>
+                    {brl(lead.valor)}
                   </span>
-                  {lead.valor ? (
-                    <>
-                      {" "}
-                      ·{" "}
-                      <span style={{ color: "var(--green)", fontWeight: 600 }}>
-                        {brl(lead.valor)}
-                      </span>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-              <button className="ico-btn" onClick={closeDrawer}>
-                <Icon name="x" size={18} />
-              </button>
+                </>
+              ) : null}
             </div>
+          </div>
+          <button className="ico-btn" onClick={closeDrawer} title="Fechar (Esc)">
+            <Icon name="x" size={18} />
+          </button>
+        </div>
 
-            <div className="drawer-body">
+        <div className="drawer-body">
               <div className="dsec">
                 <div className="dlinks">
                   {lead.whatsapp && (
@@ -318,6 +337,48 @@ export function LeadDrawer() {
               </div>
 
               <div className="dsec">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 10,
+                  }}
+                >
+                  <h4 style={{ margin: 0, flex: 1 }}>
+                    Oferta / valores{" "}
+                    <span style={{ textTransform: "none", fontWeight: 400 }}>
+                      (quando perguntam &ldquo;quanto custa e como faço?&rdquo;)
+                    </span>
+                  </h4>
+                  {lead.oferta && (
+                    <button
+                      className="btn sm"
+                      onClick={() =>
+                        navigator.clipboard.writeText(lead.oferta || "")
+                      }
+                    >
+                      <Icon name="copy" size={12} /> Copiar
+                    </button>
+                  )}
+                  {lead.whatsapp && lead.oferta && (
+                    <button className="btn sm primary" onClick={sendOffer}>
+                      <Icon name="chat" size={12} /> Enviar
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  className="msg-edit"
+                  key={"oferta-" + lead.id}
+                  defaultValue={lead.oferta || ""}
+                  placeholder="Descreva valores, prazos e como funciona o seu processo..."
+                  onBlur={(e) =>
+                    setField(lead.id, "oferta", e.target.value || null)
+                  }
+                />
+              </div>
+
+              <div className="dsec">
                 <h4>Adicionar anotação</h4>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
@@ -372,9 +433,7 @@ export function LeadDrawer() {
                 </button>
               </div>
             </div>
-          </>
-        )}
       </div>
-    </>
+    </div>
   );
 }
