@@ -206,9 +206,38 @@ export function LeadDrawer() {
                     />
                   </div>
                   <div className="dfield">
+                    <label>
+                      Instagram
+                      {lead.instagram?.startsWith("http") ? " — link ativo" : ""}
+                    </label>
+                    <input
+                      defaultValue={lead.instagram || ""}
+                      key={"ig-" + lead.id}
+                      placeholder="https://instagram.com/usuario"
+                      onBlur={(e) =>
+                        setField(lead.id, "instagram", e.target.value || null)
+                      }
+                    />
+                  </div>
+                  <div className="dfield">
+                    <label>
+                      Site{lead.site ? " — link ativo" : ""}
+                    </label>
+                    <input
+                      defaultValue={lead.site || ""}
+                      key={"site-" + lead.id}
+                      placeholder="https://..."
+                      onBlur={(e) =>
+                        setField(lead.id, "site", e.target.value || null)
+                      }
+                    />
+                  </div>
+                  <div className="dfield">
                     <label>E-mail</label>
                     <input
                       defaultValue={lead.email || ""}
+                      key={"email-" + lead.id}
+                      placeholder="contato@empresa.com"
                       onBlur={(e) =>
                         setField(lead.id, "email", e.target.value || null)
                       }
@@ -218,6 +247,7 @@ export function LeadDrawer() {
                     <label>Endereço</label>
                     <input
                       defaultValue={lead.endereco || ""}
+                      key={"end-" + lead.id}
                       onBlur={(e) =>
                         setField(lead.id, "endereco", e.target.value || null)
                       }
