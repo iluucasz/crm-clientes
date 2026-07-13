@@ -893,6 +893,25 @@ tbody td {
   overflow-y: auto;
   color: #c4cdda;
 }
+.msg-edit {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: #d3dae6;
+  padding: 13px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  outline: none;
+  font-family: inherit;
+  color-scheme: dark;
+  resize: vertical;
+  min-height: 150px;
+  transition: border-color 0.15s;
+}
+.msg-edit:focus {
+  border-color: var(--accent);
+}
 .dlinks {
   display: flex;
   gap: 8px;
@@ -932,62 +951,187 @@ tbody td {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(3px);
-  animation: fadeUp 0.22s ease;
+  padding: 20px;
+  background: rgba(6, 8, 12, 0.62);
+  backdrop-filter: blur(5px);
+  animation: overlayIn 0.2s ease;
+}
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .modal-box {
-  background: var(--bg2);
+  background: linear-gradient(180deg, var(--card) 0%, var(--bg2) 100%);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 18px;
   width: 560px;
-  max-width: 94vw;
-  max-height: 88vh;
-  overflow-y: auto;
-  padding: 24px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  animation: modalIn 0.26s cubic-bezier(0.2, 0.85, 0.25, 1);
 }
-.modal-box h2 {
-  font-size: 16px;
-  margin-bottom: 18px;
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.modal-head {
   display: flex;
   align-items: center;
+  gap: 13px;
+  padding: 19px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 7px 18px rgba(79, 110, 247, 0.4);
+}
+.modal-head h2 {
+  font-size: 16.5px;
+  font-weight: 650;
+}
+.modal-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.modal-close {
+  margin-left: auto;
+  align-self: flex-start;
+}
+.modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
   gap: 9px;
-  font-weight: 600;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.16);
 }
 .drop-zone {
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 32px;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  padding: 30px;
   text-align: center;
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: 13px;
+  line-height: 1.55;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.01);
 }
 .drop-zone:hover,
 .drop-zone.over {
   border-color: var(--accent);
-  background: rgba(79, 110, 247, 0.06);
+  background: rgba(79, 110, 247, 0.08);
   color: var(--accent2);
 }
 .drop-zone svg.i {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: block;
   margin: 0 auto 10px;
   stroke-width: 1.5;
+  color: var(--accent2);
 }
 .imp-log {
   font-size: 12px;
-  background: var(--card);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 13px 14px;
   max-height: 170px;
   overflow-y: auto;
   white-space: pre-wrap;
   line-height: 1.6;
+  color: #b8c1d0;
+  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+}
+.form-section {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 4px 0 11px;
+}
+.form-section:not(:first-child) {
+  margin-top: 20px;
+}
+.export-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.16s;
+  text-decoration: none;
+  font-family: inherit;
+}
+.export-card:hover {
+  border-color: var(--accent);
+  background: var(--card2);
+  transform: translateY(-1px);
+}
+.export-card-ic {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(79, 110, 247, 0.13);
+  color: var(--accent2);
+  border: 1px solid rgba(79, 110, 247, 0.22);
+}
+.export-card > div:not(.export-card-ic) {
+  flex: 1;
+  min-width: 0;
+}
+.export-card b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.export-card span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.export-card > svg {
+  color: var(--muted);
 }
 
 /* ===== TOAST ===== */
@@ -1058,6 +1202,77 @@ tbody td {
 }
 .field-input:focus {
   border-color: var(--accent);
+}
+
+/* ===== REFINAMENTOS VISUAIS ===== */
+.kpi {
+  background: linear-gradient(158deg, var(--card2) 0%, var(--card) 62%);
+}
+.kpi .val {
+  font-weight: 750;
+  letter-spacing: -0.6px;
+}
+.kpi::before {
+  box-shadow: 0 0 16px var(--kc, var(--accent));
+  opacity: 0.9;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), #6d84f9);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn[disabled] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.panel {
+  transition: border-color 0.2s, transform 0.2s;
+}
+.panel:hover {
+  border-color: #2f3848;
+}
+.panel h3 .dot {
+  box-shadow: 0 0 8px currentColor;
+}
+
+.topbar {
+  background: linear-gradient(180deg, var(--bg2), rgba(18, 22, 29, 0.82));
+}
+
+.nav-item {
+  font-weight: 550;
+}
+.nav-item.active {
+  box-shadow: inset 0 0 0 1px rgba(79, 110, 247, 0.16);
+}
+
+.status-sel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.prio-pill {
+  border: 1px solid currentColor;
+}
+
+/* Barra de acento colorida no topo do drawer */
+.drawer-accent {
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.fu-item {
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+}
+.fu-item:hover {
+  transform: translateX(2px);
+  background: var(--card2);
+}
+
+.search-box input:hover {
+  border-color: #35405a;
 }
 
 @media (max-width: 900px) {

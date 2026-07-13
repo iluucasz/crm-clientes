@@ -33,6 +33,10 @@ export function LeadDrawer() {
       <div className={`drawer ${open ? "open" : ""}`}>
         {lead && (
           <>
+            <div
+              className="drawer-accent"
+              style={{ background: stColor(lead.status) }}
+            />
             <div className="drawer-head">
               <div style={{ flex: 1 }}>
                 <h2>{lead.empresa}</h2>
@@ -244,12 +248,44 @@ export function LeadDrawer() {
                 </div>
               </div>
 
-              {lead.mensagem && (
-                <div className="dsec">
-                  <h4>Mensagem personalizada</h4>
-                  <div className="msg-box">{lead.mensagem}</div>
+              <div className="dsec">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 10,
+                  }}
+                >
+                  <h4 style={{ margin: 0, flex: 1 }}>Mensagem personalizada</h4>
+                  {lead.mensagem && (
+                    <button
+                      className="btn sm"
+                      onClick={() => copyMessage(lead.id)}
+                    >
+                      <Icon name="copy" size={12} /> Copiar
+                    </button>
+                  )}
                 </div>
-              )}
+                <textarea
+                  className="msg-edit"
+                  key={"msg-" + lead.id}
+                  defaultValue={lead.mensagem || ""}
+                  placeholder="Escreva a mensagem que será enviada no WhatsApp deste lead..."
+                  onBlur={(e) =>
+                    setField(lead.id, "mensagem", e.target.value || null)
+                  }
+                />
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--muted)",
+                    marginTop: 6,
+                  }}
+                >
+                  Salva ao sair do campo. É o texto enviado ao clicar em WhatsApp.
+                </div>
+              </div>
 
               <div className="dsec">
                 <h4>Adicionar anotação</h4>

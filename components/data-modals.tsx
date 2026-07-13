@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useCrm } from "./crm-context";
 import { useToast } from "./toast";
 import { Icon } from "./icon";
+import { Modal } from "./modal";
 import { toCSV, parseCSV, rowsToLeads } from "@/lib/csv";
 import { today } from "@/lib/format";
 
@@ -79,113 +80,98 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <h2>
-          <Icon name="import" size={16} /> Importar leads
-        </h2>
-        <div
-          className={`drop-zone ${over ? "over" : ""}`}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setOver(true);
-          }}
-          onDragLeave={() => setOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setOver(false);
-            const f = e.dataTransfer.files[0];
-            if (f) handleFile(f);
-          }}
-        >
-          <Icon name="import" size={32} />
-          Arraste um arquivo <b>.csv</b> ou <b>.json</b> aqui, ou clique para
-          escolher.
-          <br />
-          Leads duplicados (mesma empresa ou WhatsApp) são ignorados.
+    <Modal
+      icon="import"
+      title="Importar leads"
+      subtitle="Arquivos .csv ou .json — duplicados são ignorados"
+      onClose={onClose}
+      footer={
+        <button className="btn sm" onClick={onClose}>
+          Fechar
+        </button>
+      }
+    >
+      <div
+        className={`drop-zone ${over ? "over" : ""}`}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          const f = e.dataTransfer.files[0];
+          if (f) handleFile(f);
+        }}
+      >
+        <Icon name="import" size={30} />
+        Arraste um arquivo <b>.csv</b> ou <b>.json</b> aqui, ou clique para
+        escolher.
+        <br />
+        Leads duplicados (mesma empresa ou WhatsApp) são ignorados.
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".csv,.json"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+      {log.length > 0 && (
+        <div className="imp-log" style={{ marginTop: 14 }}>
+          {log.join("\n")}
         </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.json"
-          style={{ display: "none" }}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) handleFile(f);
-          }}
-        />
-        {log.length > 0 && (
-          <div className="imp-log">{log.join("\n")}</div>
-        )}
+      )}
 
-        <div style={{ marginTop: 16 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
+      <div style={{ marginTop: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="form-section" style={{ flex: 1, margin: 0 }}>
+            Como preparar o JSON
+          </div>
+          <button
+            className="btn sm"
+            onClick={() => {
+              navigator.clipboard
+                .writeText(EXAMPLE_JSON)
+                .then(() => toast("Exemplo copiado", "info"));
             }}
           >
-            <h4
-              style={{
-                fontSize: 11,
-                textTransform: "uppercase",
-                letterSpacing: 0.9,
-                color: "var(--muted)",
-                fontWeight: 700,
-                flex: 1,
-              }}
-            >
-              Como preparar o JSON
-            </h4>
-            <button
-              className="btn sm"
-              onClick={() => {
-                navigator.clipboard
-                  .writeText(EXAMPLE_JSON)
-                  .then(() => toast("Exemplo copiado", "info"));
-              }}
-            >
-              <Icon name="copy" size={13} /> Copiar exemplo
-            </button>
-            <button
-              className="btn sm"
-              onClick={() =>
-                download(
-                  "exemplo_importacao.json",
-                  EXAMPLE_JSON,
-                  "application/json"
-                )
-              }
-            >
-              <Icon name="export" size={13} /> Baixar exemplo
-            </button>
-          </div>
-          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>
-            Envie uma <b>lista</b> de objetos. Só <b>empresa</b> é obrigatório;
-            os demais campos são opcionais. Datas no formato{" "}
-            <b>AAAA-MM-DD</b>; <b>prioridade</b>: Muito alta / Alta / Média /
-            Baixa; <b>status</b>: Novo, Contato enviado, Respondeu,
-            Interessado, Orçamento enviado, Fechado... O link do WhatsApp é
-            gerado automaticamente a partir do <b>contato</b>.
-          </p>
-          <pre
-            className="imp-log"
-            style={{ maxHeight: 220, display: "block" }}
+            <Icon name="copy" size={13} /> Copiar
+          </button>
+          <button
+            className="btn sm"
+            onClick={() =>
+              download("exemplo_importacao.json", EXAMPLE_JSON, "application/json")
+            }
           >
-            {EXAMPLE_JSON}
-          </pre>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-          <button className="btn sm" onClick={onClose}>
-            Fechar
+            <Icon name="export" size={13} /> Baixar
           </button>
         </div>
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--muted)",
+            margin: "10px 0",
+            lineHeight: 1.6,
+          }}
+        >
+          Envie uma <b>lista</b> de objetos. Só <b>empresa</b> é obrigatório; os
+          demais campos são opcionais. Datas no formato <b>AAAA-MM-DD</b>;{" "}
+          <b>prioridade</b>: Muito alta / Alta / Média / Baixa; <b>status</b>:
+          Novo, Contato enviado, Respondeu, Interessado, Orçamento enviado,
+          Fechado... O link do WhatsApp é gerado automaticamente a partir do{" "}
+          <b>contato</b>.
+        </p>
+        <pre className="imp-log" style={{ maxHeight: 230, display: "block" }}>
+          {EXAMPLE_JSON}
+        </pre>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -193,53 +179,76 @@ export function ExportModal({ onClose }: { onClose: () => void }) {
   const { leads } = useCrm();
   const toast = useToast();
 
+  const options = [
+    {
+      icon: "users" as const,
+      title: "Planilha CSV",
+      desc: "Todos os leads em formato de tabela, abre no Excel/Sheets.",
+      action: () => {
+        download(`leads_crm_${today()}.csv`, toCSV(leads), "text/csv;charset=utf-8");
+        toast("CSV exportado", "info");
+      },
+    },
+    {
+      icon: "copy" as const,
+      title: "Backup JSON",
+      desc: "Cópia completa que pode ser reimportada mais tarde.",
+      action: () => {
+        download(
+          `backup_crm_${today()}.json`,
+          JSON.stringify(leads, null, 1),
+          "application/json"
+        );
+        toast("Backup JSON gerado", "info");
+      },
+    },
+    {
+      icon: "globe" as const,
+      title: "CSV direto do banco",
+      desc: "Gerado no servidor a partir do estado atual do Postgres.",
+      href: "/api/export?format=csv",
+    },
+  ];
+
   return (
-    <div className="modal" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <h2>
-          <Icon name="export" size={16} /> Exportar / Backup
-        </h2>
-        <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 16 }}>
-          Baixe seus {leads.length} leads em planilha (CSV) ou faça um backup
-          completo (JSON) que pode ser reimportado depois.
-        </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            className="btn primary"
-            onClick={() => {
-              download(
-                `leads_crm_${today()}.csv`,
-                toCSV(leads),
-                "text/csv;charset=utf-8"
-              );
-              toast("CSV exportado", "info");
-            }}
-          >
-            <Icon name="export" size={14} /> Exportar CSV
-          </button>
-          <button
-            className="btn"
-            onClick={() => {
-              download(
-                `backup_crm_${today()}.json`,
-                JSON.stringify(leads, null, 1),
-                "application/json"
-              );
-              toast("Backup JSON gerado", "info");
-            }}
-          >
-            <Icon name="export" size={14} /> Backup JSON
-          </button>
-          <a className="btn" href="/api/export?format=csv">
-            <Icon name="globe" size={14} /> CSV direto do banco
-          </a>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-          <button className="btn sm" onClick={onClose}>
-            Fechar
-          </button>
-        </div>
+    <Modal
+      icon="export"
+      title="Exportar / Backup"
+      subtitle={`${leads.length} leads disponíveis`}
+      onClose={onClose}
+      footer={
+        <button className="btn sm" onClick={onClose}>
+          Fechar
+        </button>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {options.map((o) =>
+          o.href ? (
+            <a key={o.title} className="export-card" href={o.href}>
+              <div className="export-card-ic">
+                <Icon name={o.icon} size={17} />
+              </div>
+              <div>
+                <b>{o.title}</b>
+                <span>{o.desc}</span>
+              </div>
+              <Icon name="export" size={15} />
+            </a>
+          ) : (
+            <button key={o.title} className="export-card" onClick={o.action}>
+              <div className="export-card-ic">
+                <Icon name={o.icon} size={17} />
+              </div>
+              <div>
+                <b>{o.title}</b>
+                <span>{o.desc}</span>
+              </div>
+              <Icon name="export" size={15} />
+            </button>
+          )
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
